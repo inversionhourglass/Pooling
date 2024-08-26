@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0030053F-1722-42DE-A9B4-00A4AC1F7A16}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{C759790D-2979-4513-A04C-22A35B9DB2E7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_SolutionItems", "_SolutionItems", "{67E65E24-AFC2-401C-9386-849BC8999259}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+		README.md = README.md
+		README_en.md = README_en.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pooling", "src\Pooling\Pooling.csproj", "{396003DF-AC24-4A69-BF4F-AE25E5D119C4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DC5E1A17-5E5D-482A-8192-3D2D60504396} = {DC5E1A17-5E5D-482A-8192-3D2D60504396}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pooling.Fody", "src\Pooling.Fody\Pooling.Fody.csproj", "{DC5E1A17-5E5D-482A-8192-3D2D60504396}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{396003DF-AC24-4A69-BF4F-AE25E5D119C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{396003DF-AC24-4A69-BF4F-AE25E5D119C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{396003DF-AC24-4A69-BF4F-AE25E5D119C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{396003DF-AC24-4A69-BF4F-AE25E5D119C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC5E1A17-5E5D-482A-8192-3D2D60504396}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC5E1A17-5E5D-482A-8192-3D2D60504396}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC5E1A17-5E5D-482A-8192-3D2D60504396}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC5E1A17-5E5D-482A-8192-3D2D60504396}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{396003DF-AC24-4A69-BF4F-AE25E5D119C4} = {0030053F-1722-42DE-A9B4-00A4AC1F7A16}
+		{DC5E1A17-5E5D-482A-8192-3D2D60504396} = {0030053F-1722-42DE-A9B4-00A4AC1F7A16}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E93ED568-E4B6-4EC8-B692-700EE6AE5592}
+	EndGlobalSection
+EndGlobal
