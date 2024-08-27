@@ -14,12 +14,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_SolutionItems", "_Solution
 		README_en.md = README_en.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pooling", "src\Pooling\Pooling.csproj", "{396003DF-AC24-4A69-BF4F-AE25E5D119C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pooling", "src\Pooling\Pooling.csproj", "{396003DF-AC24-4A69-BF4F-AE25E5D119C4}"
 	ProjectSection(ProjectDependencies) = postProject
 		{DC5E1A17-5E5D-482A-8192-3D2D60504396} = {DC5E1A17-5E5D-482A-8192-3D2D60504396}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pooling.Fody", "src\Pooling.Fody\Pooling.Fody.csproj", "{DC5E1A17-5E5D-482A-8192-3D2D60504396}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pooling.Fody", "src\Pooling.Fody\Pooling.Fody.csproj", "{DC5E1A17-5E5D-482A-8192-3D2D60504396}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{C44BFFC2-6D5C-4CB3-BBB0-D99C215EAA87}"
 EndProject
@@ -57,5 +57,7 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		shared\Fody.Simulations\Fody.Simulations.projitems*{a4aae133-ecef-48fc-b04c-015811e24c6d}*SharedItemsImports = 13
 		shared\Cecil.AspectN\Cecil.AspectN.projitems*{da6b6e9a-b485-4391-9934-cf0cff653bb8}*SharedItemsImports = 13
+		shared\Cecil.AspectN\Cecil.AspectN.projitems*{dc5e1a17-5e5d-482a-8192-3d2d60504396}*SharedItemsImports = 5
+		shared\Fody.Simulations\Fody.Simulations.projitems*{dc5e1a17-5e5d-482a-8192-3d2d60504396}*SharedItemsImports = 5
 	EndGlobalSection
 EndGlobal
