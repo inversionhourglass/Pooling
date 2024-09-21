@@ -12,4 +12,8 @@
     <PackageReference Include="FodyHelpers" Version="6.8.1" />
   </ItemGroup>
 
+  <Import Project="..\..\shared\Fody.Simulations\Fody.Simulations.projitems" Label="Shared" />
+
+  <Import Project="..\..\shared\Cecil.AspectN\Cecil.AspectN.projitems" Label="Shared" />
+
 </Project>
