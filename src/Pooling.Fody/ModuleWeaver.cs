@@ -32,7 +32,11 @@ namespace Pooling.Fody
         }
 #pragma warning restore CS8618, CS8601
 
-        protected override bool Enabled() => _config.Enabled;
+        protected override bool Enabled()
+        {
+            LoadConfig();
+            return _config.Enabled;
+        }
 
         protected override void ExecuteInternal()
         {
@@ -168,6 +172,35 @@ namespace Pooling.Fody
                 if (resetFunc == null) continue;
 
                 // 将new操作替换为Pool操作
+            }
+        }
+
+        private void LoadConfig()
+        {
+            if (_config != null) return;
+
+            var enabled = GetConfigValue("true", "enabled");
+            var compositeAccessibility = GetConfigValue("false", "composite-accessibility");
+            var inclusiveMethods = GetConfigValue("", "inclusive-methods");
+            var exclusiveMethods = GetConfigValue("", "exclusive-methods");
+            var pooledMethodTypes = GetConfigValue("", "pooled-method-types");
+            var pooledTypes = GetConfigValue("", "pooled-types");
+            var nonPooledTypes = GetConfigValue("", "non-pooled-types");
+
+            _config = new Config(enabled, compositeAccessibility, inclusiveMethods, exclusiveMethods, pooledMethodTypes, pooledTypes, nonPooledTypes);
+            WriteConfigToDebug();
+
+            void WriteConfigToDebug()
+            {
+                WriteDebug("======================Configuration Start======================");
+                WriteDebug($"                enabled: {enabled}");
+                WriteDebug($"composite-accessibility: {compositeAccessibility}");
+                WriteDebug($"      inclusive-methods: {inclusiveMethods}");
+                WriteDebug($"      exclusive-methods: {exclusiveMethods}");
+                WriteDebug($"    pooled-method-types: {pooledMethodTypes}");
+                WriteDebug($"           pooled-types: {pooledTypes}");
+                WriteDebug($"       non-pooled-types: {nonPooledTypes}");
+                WriteDebug("=======================Configuration End=======================");
             }
         }
 

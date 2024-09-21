@@ -7,10 +7,16 @@ namespace Pooling.Fody
     /// <summary>
     /// 所有配置的表达式使用英文分号';'作为分隔符，波浪号'~'表示使用try..finally..强制reset
     /// </summary>
-    public class Config(string enabled, string compositeAccessibility, string inclusiveMethods, string exclusiveMethods, string nonPooledTypes, string pooledMethodTypes, string pooledTypes)
+    public class Config(string enabled, string compositeAccessibility, string inclusiveMethods, string exclusiveMethods, string pooledMethodTypes, string pooledTypes, string nonPooledTypes)
     {
+        /// <summary>
+        /// enabled. 是否启用Pooling
+        /// </summary>
         public bool Enabled { get; } = "true".Equals(enabled, StringComparison.OrdinalIgnoreCase);
 
+        /// <summary>
+        /// composite-accessibility. 是否使用组合可访问性
+        /// </summary>
         public bool CompositeAccessibility { get; } = "true".Equals(compositeAccessibility, StringComparison.OrdinalIgnoreCase);
 
         /// <summary>
