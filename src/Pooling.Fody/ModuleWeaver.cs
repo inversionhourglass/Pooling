@@ -68,7 +68,23 @@ namespace Pooling.Fody
             foreach (var methodDef in typeDef.Methods)
             {
                 var signature = SignatureParser.ParseMethod(methodDef, _config.CompositeAccessibility);
-                if (inclusiveMethods != null && inclusiveMethods.All(x => !x.IsMatch(signature)) || exclusiveMethods != null && exclusiveMethods.Any(x => x.IsMatch(signature))) continue;
+                var exclusivePattern = exclusiveMethods?.FirstOrDefault(x => x.IsMatch(signature)).Pattern;
+                if (exclusivePattern != null)
+                {
+                    WriteInfo($"{methodDef} is excluded by the exclusive-methods pattern ({exclusivePattern}).");
+                    continue;
+                }
+
+                if (inclusiveMethods != null)
+                {
+                    var inclusivePattern = inclusiveMethods.FirstOrDefault(x => x.IsMatch(signature)).Pattern;
+                    if (inclusivePattern == null) continue;
+                    WriteInfo($"{methodDef} is included by the inclusive-methods pattern ({inclusivePattern}).");
+                }
+                else
+                {
+                    WriteInfo($"{methodDef} is included because the inclusive-methods configuration is absent.");
+                }
 
                 InspectMethod(methodDef);
             }
@@ -215,7 +231,7 @@ namespace Pooling.Fody
 
         public override IEnumerable<string> GetAssembliesForScanning()
         {
-            foreach(var item in base.GetAssembliesForScanning())
+            foreach (var item in base.GetAssembliesForScanning())
             {
                 yield return item;
             }
