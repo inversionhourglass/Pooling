@@ -1,10 +1,19 @@
-﻿namespace Pooling
+﻿using System;
+
+namespace Pooling
 {
     /// <summary>
     /// Automatically reset the item that implements this interface when it returns to the pool.
     /// </summary>
     public interface IPoolItem
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        Type[]? NonPooledTypes { get; }
+
+        string? NonPooledTypePattern { get; }
+
         /// <summary>
         /// Reset the object to a neutral state, semantically similar to when the object was first constructed.
         /// </summary>
