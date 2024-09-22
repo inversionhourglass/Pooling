@@ -1,12 +1,10 @@
-﻿using Cecil.AspectN;
-using Cecil.AspectN.Matchers;
+﻿using Cecil.AspectN.Matchers;
 using Cecil.AspectN.Patterns.Parsers;
 using Fody;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 using Pooling.Fody.AspectN.Patterns.Parsers;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Pooling.Fody
 {
@@ -19,6 +17,8 @@ namespace Pooling.Fody
 
         private MethodDefinition _mdGet;
         private MethodDefinition _mdReturn;
+
+        private ITypeMatcher[]? _assemblyNonPooledMatcher;
 
         private Config _config;
 
@@ -40,92 +40,78 @@ namespace Pooling.Fody
 
         protected override void ExecuteInternal()
         {
+            if (TryResolveAssemblyNonPooledMatcher()) return;
+
             Parser.TypePrefixParsers.Add(new ForceResetTypePrefixParser());
 
             _resetFuncManager = new(ModuleDefinition, _tBooleanRef);
 
             foreach (var typeDef in ModuleDefinition.Types)
             {
+                if (typeDef.IsEnum || typeDef.IsInterface || typeDef.IsArray || typeDef.IsDelegate() || !typeDef.HasMethods) continue;
+                if (typeDef.IsCompilerGenerated()) continue;
+
                 InspectType(typeDef);
             }
         }
 
-        private void InspectMethod(MethodDefinition methodDef)
+        /// <summary>
+        /// 返回true表示存在全局不池化的NonPooledAttribute，后续直接返回，结束Pooling检查工作即可
+        /// </summary>
+        private bool TryResolveAssemblyNonPooledMatcher()
         {
-            var instructions = methodDef.Body.Instructions;
-
-            foreach (var instruction in instructions)
+            var assemblyNonPooledMatcher = TryResolveNonPooledMatcher(ModuleDefinition.CustomAttributes);
+            if (assemblyNonPooledMatcher == null)
             {
-                if (instruction.OpCode.Code != Code.Newobj || instruction.Operand is not MethodReference ctor || ctor.Parameters.Count != 0) continue;
-
-                var declaringTypeRef = ctor.DeclaringType;
-                if (declaringTypeRef is not TypeDefinition declaringTypeDef)
-                {
-                    declaringTypeDef = declaringTypeRef.Resolve();
-                }
-                if (!_cache.TryGetValue(declaringTypeDef, out var resetMap))
-                {
-                    resetMap = [];
-                    _cache[declaringTypeDef] = resetMap;
-                }
-                var typeName = declaringTypeRef.FullName;
-                if (!resetMap.TryGetValue(typeName, out var resetFunc))
-                {
-                    var typeSignature = SignatureParser.ParseType(declaringTypeRef);
-
-                    if (_config.NonPooledTypes.Any(x => x.IsMatch(typeSignature)))
-                    {
-                        resetMap[typeName] = null;
-                        continue;
-                    }
-
-                    foreach (var matcher in _config.PooledMethodTypes)
-                    {
-                        if (!matcher.DeclaringTypeMatcher.IsMatch(typeSignature)) continue;
-
-                        MethodDefinition? zeroArgResetMethodDef = null;
-                        foreach (var md in declaringTypeDef.Methods)
-                        {
-                            var methodSignature = SignatureParser.ParseMethod(md, _config.CompositeAccessibility);
-                            if (matcher.IsMatch(methodSignature) && md.Parameters.Count == 0)
-                            {
-                                zeroArgResetMethodDef = md;
-                                break;
-                            }
-                        }
-                        if (zeroArgResetMethodDef != null)
-                        {
-                            resetFunc = _resetFuncManager.Create(zeroArgResetMethodDef);
-                            break;
-                        }
-                    }
-
-                    if (resetFunc == null)
-                    {
-                        if (declaringTypeRef.Implement(Constants.TYPE_IPoolItem))
-                        {
-                            resetFunc = _resetFuncManager.Create();
-                        }
-                        else
-                        {
-                            foreach (var matcher in _config.PooledTypes)
-                            {
-                                if (matcher.IsMatch(typeSignature))
-                                {
-                                    resetFunc = _resetFuncManager.Create();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    resetMap[typeName] = resetFunc;
-                }
-
-                if (resetFunc == null) continue;
-
-                // 将new操作替换为Pool操作
+                WriteInfo("Exit pooling operation by module level NonPooledAttribute.");
+                return true;
             }
+            var moduleNonPooledMatcher = TryResolveNonPooledMatcher(ModuleDefinition.Assembly.CustomAttributes);
+            if (moduleNonPooledMatcher == null)
+            {
+                WriteInfo("Exit pooling operation by assembly level NonPooledAttribute.");
+                return true;
+            }
+
+            _assemblyNonPooledMatcher = [.. assemblyNonPooledMatcher, .. moduleNonPooledMatcher];
+            return false;
+        }
+
+        /// <summary>
+        /// 返回null表示至少有一个未对属性进行赋值的NonPooledAttribute，无任何配置的NonPooledAttribute表示整体不进行池化操作，不针对某一池化类型
+        /// </summary>
+        /// <returns>池化类型匹配器，表示当前目标哪些池化类型不进行池化操作</returns>
+        private static ITypeMatcher[]? TryResolveNonPooledMatcher(Mono.Collections.Generic.Collection<CustomAttribute> attributes)
+        {
+            var matchers = new List<ITypeMatcher>();
+
+            foreach (var attribute in attributes)
+            {
+                var beforeCount = matchers.Count;
+                if (attribute.Is(Constants.TYPE_NonPooledAttribute))
+                {
+                    if (attribute.Properties.Count == 0) return null;
+
+                    foreach (var property in attribute.Properties)
+                    {
+                        if (property.Name == Constants.PROP_Types)
+                        {
+                            if (property.Argument.Value is not TypeReference typeRef) throw new ArgumentException($"Cannot parse the Types property value of NonPooledAttribute to a TypeReference instance, the actual type is {property.Argument.Value.GetType()}");
+
+                            matchers.Add(new TypeReferenceMatcher(typeRef));
+                        }
+                        else if (property.Name == Constants.PROP_Pattern)
+                        {
+                            if (property.Argument.Value is not string pattern) throw new ArgumentException($"Cannot parse the Types property value of NonPooledAttribute to a string instance, the actual type is {property.Argument.Value.GetType()}");
+
+                            matchers.Add(new TypeMatcher(pattern));
+                        }
+                    }
+                }
+                if (matchers.Count == beforeCount) return null;
+            }
+
+            return matchers.ToArray();
         }
 
         private void LoadConfig()
