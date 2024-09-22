@@ -1,11 +1,27 @@
-﻿using Cecil.AspectN.Matchers;
+﻿using Cecil.AspectN;
+using Cecil.AspectN.Matchers;
 using System;
-using System.Linq;
 
 namespace Pooling.Fody
 {
+    /**
+     * <Pooling enabled="true" composite-accessibility="false">
+     *   <Inclusives>
+     *     <Inclusive>any_aspectn_pattern</Inclusive>
+     *     <Inclusive>any_aspectn_pattern</Inclusive>
+     *   </Inclusives>
+     *   <Exclusives>
+     *     <Exclusive>any_aspectn_pattern</Exclusive>
+     *     <Exclusive>any_aspectn_pattern</Exclusive>
+     *   </Exclusives>
+     *   <Items>
+     *     <Item pattern="method_pattern_without_symbols" stateless="type_pattern" apply="any_aspectn_pattern" exclusive="any_aspectn_pattern" />
+     *     <Item pattern="method_pattern_without_symbols" stateless="type_pattern" apply="any_aspectn_pattern" exclusive="any_aspectn_pattern" />
+     *   </Items>
+     * </Pooling>
+     */
+
     /// <summary>
-    /// 所有配置的表达式使用英文分号';'作为分隔符，波浪号'~'表示使用try..finally..强制reset
     /// </summary>
     public class Config(string enabled, string compositeAccessibility, string inclusiveMethods, string exclusiveMethods, string pooledMethodTypes, string pooledTypes, string nonPooledTypes)
     {
@@ -19,44 +35,45 @@ namespace Pooling.Fody
         /// </summary>
         public bool CompositeAccessibility { get; } = "true".Equals(compositeAccessibility, StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>
-        /// inclusive-methods. 与该表达式匹配的方法的内部会进行IL检查，优先级低于<see cref="ExclusiveMethods"/>
-        /// </summary>
-        /// <remarks>
-        /// 如果当前表达式缺省，则表示匹配所有方法
-        /// </remarks>
-        public MethodMatcher[] InclusiveMethods { get; } = inclusiveMethods.Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(x => new MethodMatcher(x)).ToArray();
+        public IMatcher[] Inclusives { get; } = [];
 
-        /// <summary>
-        /// exclusive-methods. 与该表达式匹配的方法的内部不会进行IL检查，用于筛选<see cref="InclusiveMethods"/>的结果集
-        /// </summary>
-        /// <remarks>
-        /// 如果当前表达式缺省，则表示不对<see cref="InclusiveMethods"/>的结果集进行筛选
-        /// </remarks>
-        public MethodMatcher[] ExclusiveMethods { get; } = exclusiveMethods.Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(x => new MethodMatcher(x)).ToArray();
+        public IMatcher[] Exclusives { get; } = [];
 
-        /// <summary>
-        /// pooled-method-types. 自定义reset方法的池化类型，表达式的类型部分与<see cref="PooledTypes"/>作用相同，方法部分用来表示自定义的reset方法
-        /// </summary>
-        /// <remarks>
-        /// 在当前表达式中定义的池化类型不需要到<see cref="PooledTypes"/>中重复定义，当然，重复了也没关系，<see cref="PooledMethodTypes"/>具有更高优先级
-        /// </remarks>
-        public MethodMatcher[] PooledMethodTypes { get; } = pooledMethodTypes.Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(x => new MethodMatcher(x)).ToArray();
+        public Item[] Items { get; } = [];
 
-        /// <summary>
-        /// pooled-types. 进行池化的类型，在方法内部进行IL检查时，与该表达式匹配的类型将进行池化操作，优先级低于<see cref="NonPooledTypes"/>
-        /// </summary>
-        /// <remarks>
-        /// 如果当前表达式缺省，则表示不匹配任何类型，如果<see cref="PooledMethodTypes"/>也缺省，那么Pooling将不会对任何类型进行池化操作
-        /// </remarks>
-        public TypeMatcher[] PooledTypes { get; } = pooledTypes.Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(x => new TypeMatcher(x)).ToArray();
+        public class Item(string? pattern, string? stateless, string? apply, string? exclusive)
+        {
+            /// <summary>
+            /// 池化对象表达式。该表达式格式固定为`method()`格式，其中类型部分匹配池化对象，方法部分匹配重置方法
+            /// </summary>
+            /// <remarks>
+            /// 由于固定为`method()`格式，所以省略`method()`符号本身，直接编写表达式主体。该表达式与<see cref="Stateless"/>二选一，<see cref="Pattern"/>具有更高优先级
+            /// </remarks>
+            public MethodMatcher? Pattern { get; } = string.IsNullOrEmpty(pattern) ? null : new MethodMatcher(pattern!);
 
-        /// <summary>
-        /// non-pooled-types. 不进行池化操作的类型。在方法内部进行IL检查时，与该表达式匹配的类型将不进行池化操作，用于筛选<see cref="PooledMethodTypes"/>和<see cref="PooledTypes"/>的结果集
-        /// </summary>
-        /// <remarks>
-        /// 如果当前表达式缺省，则表示不对<see cref="PooledMethodTypes"/>和<see cref="PooledTypes"/>的结果集进行筛选
-        /// </remarks>
-        public TypeMatcher[] NonPooledTypes { get; } = nonPooledTypes.Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(x => new TypeMatcher(x)).ToArray();
+            /// <summary>
+            /// 无状态池化对象表达式。池化对象本身无状态，在回收时不需要重置
+            /// </summary>
+            /// <remarks>
+            /// 表达式格式为类型匹配格式，直接编写表达式主体。该表达式与<see cref="Pattern"/>二选一，<see cref="Pattern"/>具有更高优先级
+            /// </remarks>
+            public TypeMatcher? Stateless { get; } = string.IsNullOrEmpty(stateless) ? null : new TypeMatcher(stateless!);
+
+            /// <summary>
+            /// 池化应用目标表达式。匹配哪些方法/属性/构造方法里需要进行对当前池化对象进行检查，发现匹配<see cref="Pattern"/>或<see cref="Stateless"/>的初始化操作时，进行池化操作替换
+            /// </summary>
+            /// <remarks>
+            /// 该表达式缺省时表示匹配当前程序集的所有方法（包含属性和构造方法），表达式格式可用AspectN方法匹配规则中的任意一种或多种的组合
+            /// </remarks>
+            public IMatcher? Apply { get; } = string.IsNullOrEmpty(apply) ? null : PatternParser.Parse(apply!);
+
+            /// <summary>
+            /// 排除的池化应用目标表达式。匹配哪些方法/属性/构造方法不需要对当前池化对象进行检查
+            /// </summary>
+            /// <remarks>
+            /// 表达式格式可用AspectN方法匹配规则中的任意一种或多种的组合
+            /// </remarks>
+            public IMatcher? Exclusive { get; } = string.IsNullOrEmpty(exclusive) ? null : PatternParser.Parse(exclusive!);
+        }
     }
 }
