@@ -38,23 +38,23 @@ namespace Pooling.Fody
 
             if (!IsIncluded(signature, inclusiveMatchers)) return;
 
-            var poolItems = new List<Config.Item>();
+            var items = new List<Config.Item>();
             foreach (var item in _config.Items)
             {
                 if (item.Exclusive != null && item.Exclusive.IsMatch(signature)) continue;
 
                 if (item.Apply != null && !item.Apply.IsMatch(signature)) continue;
 
-                poolItems.Add(item);
+                items.Add(item);
             }
 
             if (methodDef.TryResolveStateMachine(out var stateMachineTypeDef))
             {
-                InspectAsyncInstructions(stateMachineTypeDef!, typeNonPooledMatcher, methodNonPooledMatcher, poolItems.ToArray());
+                InspectAsyncInstructions(stateMachineTypeDef!, typeNonPooledMatcher, methodNonPooledMatcher, items.ToArray());
             }
             else
             {
-                InspectSyncInstructions(methodDef, typeNonPooledMatcher, methodNonPooledMatcher, poolItems.ToArray());
+                InspectSyncInstructions(methodDef, typeNonPooledMatcher, methodNonPooledMatcher, items.ToArray());
             }
         }
 

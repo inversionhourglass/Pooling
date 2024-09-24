@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionPrefix>0.1.0</VersionPrefix>
     <Authors>ihourglass</Authors>
     <Description>Replace the new operation with the object pool operation at compile time.</Description>
     <PackageTags>Pooling ObjectPool Pool Fody IL Cecil ILWeaving</PackageTags>

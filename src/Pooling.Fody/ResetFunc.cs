@@ -5,32 +5,32 @@ using System.Linq;
 
 namespace Pooling.Fody
 {
-    internal class ResetFunc(MethodDefinition? resetMethodDef, string suffix, ResetFuncManager manager)
+    internal class ResetFunc(MethodReference? resetMethodRef, string suffix, ResetFuncManager manager)
     {
         private MethodDefinition? _tryResetMethodDef;
 
         public static ResetFunc Absent { get; } = new(null, string.Empty, null!);
 
-        public bool Has => resetMethodDef != null;
+        public bool Has => resetMethodRef != null;
 
         public Instruction Load(TypeReference[] genericParameters)
         {
-            if (resetMethodDef == null) return Instruction.Create(OpCodes.Ldnull);
+            if (resetMethodRef == null) return Instruction.Create(OpCodes.Ldnull);
 
             if (_tryResetMethodDef == null)
             {
-                _tryResetMethodDef = BuildTryResetMethod("TryReset" + suffix, resetMethodDef, manager.BoolTypeRef);
+                _tryResetMethodDef = BuildTryResetMethod("TryReset" + suffix, resetMethodRef, manager.BoolTypeRef);
                 manager.Add(_tryResetMethodDef);
             }
 
             return Instruction.Create(OpCodes.Ldftn, _tryResetMethodDef.WithGenerics(genericParameters));
         }
 
-        private static MethodDefinition BuildTryResetMethod(string methodName, MethodDefinition resetMethodDef, TypeReference returnTypeRef)
+        private static MethodDefinition BuildTryResetMethod(string methodName, MethodReference resetMethodRef, TypeReference returnTypeRef)
         {
             var methodAttributes = MethodAttributes.Assembly | MethodAttributes.Static | MethodAttributes.HideBySig;
             var tryResetMethodDef = new MethodDefinition(methodName, methodAttributes, returnTypeRef);
-            var typeDef = resetMethodDef.DeclaringType;
+            var typeDef = resetMethodRef.DeclaringType;
             TypeReference typeRef = typeDef;
             //MethodReference methodRef;
 
@@ -46,7 +46,7 @@ namespace Pooling.Fody
             var vTarget = new ParameterDefinition("target", ParameterAttributes.None, typeRef);
             tryResetMethodDef.Parameters.Add(vTarget);
 
-            BuildTryResetMethodBody(tryResetMethodDef, vTarget, resetMethodDef);
+            BuildTryResetMethodBody(tryResetMethodDef, vTarget, resetMethodRef);
 
             return tryResetMethodDef;
         }
@@ -57,13 +57,13 @@ namespace Pooling.Fody
 
             instructions.Add(Instruction.Create(OpCodes.Ldarg, vTarget));
             instructions.Add(Instruction.Create(OpCodes.Callvirt, methodRef));
-            if (methodRef.ReturnType.IsVoid())
+            if (!methodRef.ReturnType.IsBool())
             {
+                if (!methodRef.ReturnType.IsVoid())
+                {
+                    instructions.Add(Instruction.Create(OpCodes.Pop));
+                }
                 instructions.Add(Instruction.Create(OpCodes.Ldc_I4_1));
-            }
-            else if (!methodRef.ReturnType.IsBool())
-            {
-                instructions.Add(Instruction.Create(OpCodes.Pop));
             }
             instructions.Add(Instruction.Create(OpCodes.Ret));
         }

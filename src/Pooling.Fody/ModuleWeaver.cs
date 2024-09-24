@@ -5,6 +5,7 @@ using Mono.Cecil;
 using Pooling.Fody.AspectN.Patterns.Parsers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Pooling.Fody
 {
@@ -15,8 +16,8 @@ namespace Pooling.Fody
 
         private TypeReference _trPool;
 
-        private MethodDefinition _mdGet;
-        private MethodDefinition _mdReturn;
+        private MethodReference _mrGet;
+        private MethodReference _mrReturn;
 
         private ITypeMatcher[]? _assemblyNonPooledMatcher;
 
@@ -39,9 +40,9 @@ namespace Pooling.Fody
 
             Parser.TypePrefixParsers.Add(new ForceResetTypePrefixParser());
 
-            _resetFuncManager = new(ModuleDefinition, _tBooleanRef);
+            _resetFuncManager = new(this, _tBooleanRef);
 
-            foreach (var typeDef in ModuleDefinition.Types)
+            foreach (var typeDef in ModuleDefinition.Types.ToArray())
             {
                 if (typeDef.IsEnum || typeDef.IsInterface || typeDef.IsArray || typeDef.IsDelegate() || !typeDef.HasMethods) continue;
                 if (typeDef.IsCompilerGenerated()) continue;
@@ -82,9 +83,9 @@ namespace Pooling.Fody
 
             foreach (var attribute in attributes)
             {
-                var beforeCount = matchers.Count;
                 if (attribute.Is(Constants.TYPE_NonPooledAttribute))
                 {
+                    var beforeCount = matchers.Count;
                     if (attribute.Properties.Count == 0) return null;
 
                     foreach (var property in attribute.Properties)
@@ -102,11 +103,11 @@ namespace Pooling.Fody
                             matchers.Add(new TypeMatcher(pattern));
                         }
                     }
+                    if (matchers.Count == beforeCount) return null;
                 }
-                if (matchers.Count == beforeCount) return null;
             }
 
-            return matchers.ToArray();
+            return matchers.Select(x => x.Cached()).ToArray();
         }
 
         private void LoadConfig()
@@ -174,8 +175,8 @@ namespace Pooling.Fody
             base.LoadBasicReference();
 
             _trPool = FindAndImportType(Constants.TYPE_Pool_1);
-            _mdGet = _trPool.GetMethod(Constants.METHOD_Get, false);
-            _mdReturn = _trPool.GetMethod(Constants.METHOD_Return, false);
+            _mrGet = this.Import(_trPool.GetMethod(Constants.METHOD_Get, false));
+            _mrReturn = this.Import(_trPool.GetMethod(Constants.METHOD_Return, false));
         }
 
         public override IEnumerable<string> GetAssembliesForScanning()
@@ -185,14 +186,14 @@ namespace Pooling.Fody
                 yield return item;
             }
 
-            if (_debugMode)
+            if (_testRun)
             {
                 yield return "Pooling";
             }
-            else
-            {
-                yield return "Pooling.Fody";
-            }
+            //else
+            //{
+            //    yield return "Pooling.Fody";
+            //}
         }
     }
 }

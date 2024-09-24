@@ -32,7 +32,7 @@ namespace Pooling.Fody
 
             if (typeDef.HasNestedTypes)
             {
-                foreach (var nestedTypeDef in typeDef.NestedTypes)
+                foreach (var nestedTypeDef in typeDef.NestedTypes.ToArray())
                 {
                     InspectType(nestedTypeDef);
                 }
@@ -43,7 +43,7 @@ namespace Pooling.Fody
         {
             if (matchers.Length == 0) return null;
 
-            return matchers.Where(x => x.DeclaringTypeMatcher.IsMatch(typeSignature)).ToArray();
+            return matchers.Where(x => !x.SupportDeclaringTypeMatch || x.DeclaringTypeMatcher.IsMatch(typeSignature)).ToArray();
         }
     }
 }

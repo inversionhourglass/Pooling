@@ -80,7 +80,7 @@ namespace Pooling
         }
 
         /// <summary>
-        /// <inheritdoc />
+        /// Return the <paramref name="value"/> to the pool
         /// </summary>
         public static void Return(T value, Func<T, bool>? resetFunc)
         {

@@ -1,9 +1,10 @@
-﻿using Mono.Cecil;
+﻿using Fody;
+using Mono.Cecil;
 using System.Collections.Generic;
 
 namespace Pooling.Fody
 {
-    internal class ResetFuncManager(ModuleDefinition moduleDef, TypeReference boolTypeRef)
+    internal class ResetFuncManager(BaseModuleWeaver moduleWeaver, TypeReference boolTypeRef)
     {
         private readonly Dictionary<MethodDefinition, ResetFunc> _map = [];
         private readonly Dictionary<TypeDefinition, int> _coutingMap = [];
@@ -24,7 +25,7 @@ namespace Pooling.Fody
                 }
                 _coutingMap[declaringTypeDef] = count + 1;
                 var suffix = count == 0 ? string.Empty : count.ToString();
-                resetFunc = new(resetMethodDef, suffix, this);
+                resetFunc = new(moduleWeaver.Import(resetMethodDef), suffix, this);
                 _map[resetMethodDef] = resetFunc;
             }
 
@@ -44,7 +45,7 @@ namespace Pooling.Fody
             {
                 var typeAttribute = TypeAttributes.Abstract | TypeAttributes.Sealed | TypeAttributes.BeforeFieldInit;
                 _resetTypeDef = new TypeDefinition(string.Empty, ">_Pooling_Reset", typeAttribute);
-                moduleDef.Types.Add(_resetTypeDef);
+                moduleWeaver.ModuleDefinition.Types.Add(_resetTypeDef);
             }
 
             return _resetTypeDef;
