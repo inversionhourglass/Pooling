@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 
 namespace Pooling
 {
@@ -82,7 +81,7 @@ namespace Pooling
         /// <summary>
         /// Return the <paramref name="value"/> to the pool
         /// </summary>
-        public static void Return(T value, Func<T, bool>? resetFunc)
+        public static void Return(T value)
         {
             Interlocked.Exchange(ref _InUse, 1);
             Interlocked.Exchange(ref _GenericInUse, 1);
@@ -92,7 +91,7 @@ namespace Pooling
             {
                 if (_GenericPool != null)
                 {
-                    _GenericPool.Return(value, resetFunc);
+                    _GenericPool.Return(value);
                     return;
                 }
 
@@ -101,7 +100,7 @@ namespace Pooling
                 if (savedPool != null) pool = savedPool;
             }
 
-            pool.Return(value, resetFunc);
+            pool.Return(value);
         }
     }
 }

@@ -42,9 +42,9 @@ namespace Pooling
             return item;
         }
 
-        public void Return(T value, Func<T, bool>? resetFunc)
+        public void Return(T value)
         {
-            if (!_isDisposed && TryReset(value, resetFunc))
+            if (!_isDisposed && TryReset(value))
             {
                 if (_fastItem != null || Interlocked.CompareExchange(ref _fastItem, value, null) != null)
                 {
@@ -62,10 +62,8 @@ namespace Pooling
             DisposeItem(value);
         }
 
-        private bool TryReset(T value, Func<T, bool>? resetFunc)
+        private bool TryReset(T value)
         {
-            if (resetFunc != null) return resetFunc(value);
-            
             if (value is IPoolItem poolItem) return poolItem.TryReset();
 
             return _resetFunc.Value(value);

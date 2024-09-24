@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Pooling
+﻿namespace Pooling
 {
     /// <summary>
     /// Generic pool
@@ -15,7 +13,7 @@ namespace Pooling
         /// <summary>
         /// Return an item to the pool.
         /// </summary>
-        void Return<T>(T value, Func<T, bool>? resetFunc) where T : class, new();
+        void Return<T>(T value) where T : class, new();
     }
 
     /// <summary>
@@ -29,8 +27,8 @@ namespace Pooling
         T Get();
 
         /// <summary>
-        /// <inheritdoc cref="IPool.Return{T}(T, Func{T, bool}?)"/>
+        /// <inheritdoc cref="IPool.Return{T}(T)"/>
         /// </summary>
-        void Return(T value, Func<T, bool>? resetFunc);
+        void Return(T value);
     }
 }
