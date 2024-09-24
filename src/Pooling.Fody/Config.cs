@@ -1,6 +1,7 @@
 ﻿using Cecil.AspectN;
 using Cecil.AspectN.Matchers;
 using System;
+using System.Linq;
 
 namespace Pooling.Fody
 {
@@ -23,7 +24,7 @@ namespace Pooling.Fody
 
     /// <summary>
     /// </summary>
-    public class Config(string enabled, string compositeAccessibility, string inclusiveMethods, string exclusiveMethods, string pooledMethodTypes, string pooledTypes, string nonPooledTypes)
+    public class Config(string enabled, string compositeAccessibility, string[] inclusives, string[] exclusives, Config.Item[] items)
     {
         /// <summary>
         /// enabled. 是否启用Pooling
@@ -35,11 +36,11 @@ namespace Pooling.Fody
         /// </summary>
         public bool CompositeAccessibility { get; } = "true".Equals(compositeAccessibility, StringComparison.OrdinalIgnoreCase);
 
-        public IMatcher[] Inclusives { get; } = [];
+        public IMatcher[] Inclusives { get; } = inclusives.Select(x => PatternParser.Parse(x).Cached()).ToArray();
 
-        public IMatcher[] Exclusives { get; } = [];
+        public IMatcher[] Exclusives { get; } = exclusives.Select(x => PatternParser.Parse(x).Cached()).ToArray();
 
-        public Item[] Items { get; } = [];
+        public Item[] Items { get; } = items;
 
         public class Item(string? pattern, string? stateless, string? apply, string? exclusive)
         {
@@ -49,7 +50,7 @@ namespace Pooling.Fody
             /// <remarks>
             /// 由于固定为`method()`格式，所以省略`method()`符号本身，直接编写表达式主体。该表达式与<see cref="Stateless"/>二选一，<see cref="Pattern"/>具有更高优先级
             /// </remarks>
-            public MethodMatcher? Pattern { get; } = string.IsNullOrEmpty(pattern) ? null : new MethodMatcher(pattern!);
+            public IMatcher? Pattern { get; } = string.IsNullOrEmpty(pattern) ? null : new MethodMatcher(pattern!).Cached();
 
             /// <summary>
             /// 无状态池化对象表达式。池化对象本身无状态，在回收时不需要重置
@@ -57,7 +58,7 @@ namespace Pooling.Fody
             /// <remarks>
             /// 表达式格式为类型匹配格式，直接编写表达式主体。该表达式与<see cref="Pattern"/>二选一，<see cref="Pattern"/>具有更高优先级
             /// </remarks>
-            public TypeMatcher? Stateless { get; } = string.IsNullOrEmpty(stateless) ? null : new TypeMatcher(stateless!);
+            public ITypeMatcher? Stateless { get; } = string.IsNullOrEmpty(stateless) ? null : new TypeMatcher(stateless!).Cached();
 
             /// <summary>
             /// 池化应用目标表达式。匹配哪些方法/属性/构造方法里需要进行对当前池化对象进行检查，发现匹配<see cref="Pattern"/>或<see cref="Stateless"/>的初始化操作时，进行池化操作替换
@@ -65,7 +66,7 @@ namespace Pooling.Fody
             /// <remarks>
             /// 该表达式缺省时表示匹配当前程序集的所有方法（包含属性和构造方法），表达式格式可用AspectN方法匹配规则中的任意一种或多种的组合
             /// </remarks>
-            public IMatcher? Apply { get; } = string.IsNullOrEmpty(apply) ? null : PatternParser.Parse(apply!);
+            public IMatcher? Apply { get; } = string.IsNullOrEmpty(apply) ? null : PatternParser.Parse(apply!).Cached();
 
             /// <summary>
             /// 排除的池化应用目标表达式。匹配哪些方法/属性/构造方法不需要对当前池化对象进行检查
@@ -73,7 +74,7 @@ namespace Pooling.Fody
             /// <remarks>
             /// 表达式格式可用AspectN方法匹配规则中的任意一种或多种的组合
             /// </remarks>
-            public IMatcher? Exclusive { get; } = string.IsNullOrEmpty(exclusive) ? null : PatternParser.Parse(exclusive!);
+            public IMatcher? Exclusive { get; } = string.IsNullOrEmpty(exclusive) ? null : PatternParser.Parse(exclusive!).Cached();
         }
     }
 }

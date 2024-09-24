@@ -24,12 +24,7 @@ namespace Pooling.Fody
 
 #pragma warning disable CS8618, CS8601
 
-        public ModuleWeaver() : this(false, null) { }
-
-        public ModuleWeaver(bool testRun, Config? config = null) : base(testRun)
-        {
-            _config = config;
-        }
+        public ModuleWeaver(bool testRun) : base(testRun) { }
 #pragma warning restore CS8618, CS8601
 
         protected override bool Enabled()
@@ -120,25 +115,56 @@ namespace Pooling.Fody
 
             var enabled = GetConfigValue("true", "enabled");
             var compositeAccessibility = GetConfigValue("false", "composite-accessibility");
-            var inclusiveMethods = GetConfigValue("", "inclusive-methods");
-            var exclusiveMethods = GetConfigValue("", "exclusive-methods");
-            var pooledMethodTypes = GetConfigValue("", "pooled-method-types");
-            var pooledTypes = GetConfigValue("", "pooled-types");
-            var nonPooledTypes = GetConfigValue("", "non-pooled-types");
+            var inclusives = new List<string>();
+            var exclusives = new List<string>();
+            var items = new List<Config.Item>();
+            var xInclusives = Config.Element("Inclusives");
+            var xExclusives = Config.Element("Exclusives");
+            var xItems = Config.Element("Items");
+            if (xInclusives != null)
+            {
+                foreach (var xInclusive in xInclusives.Elements())
+                {
+                    if (xInclusive.Name == "Inclusive" && !string.IsNullOrEmpty(xInclusive.Value))
+                    {
+                        inclusives.Add(xInclusive.Value);
+                    }
+                }
+            }
+            if (xExclusives != null)
+            {
+                foreach (var xExclusive in xExclusives.Elements())
+                {
+                    if (xExclusive.Name == "Exclusive" && !string.IsNullOrEmpty(xExclusive.Value))
+                    {
+                        exclusives.Add(xExclusive.Value);
+                    }
+                }
+            }
+            if (xItems != null)
+            {
+                foreach(var xItem in xItems.Elements())
+                {
+                    if (xItem.Name != "Item") continue;
 
-            _config = new Config(enabled, compositeAccessibility, inclusiveMethods, exclusiveMethods, pooledMethodTypes, pooledTypes, nonPooledTypes);
+                    var pattern = xItem.Attribute("pattern")?.Value;
+                    var stateless = xItem.Attribute("stateless")?.Value;
+                    var apply = xItem.Attribute("apply")?.Value;
+                    var exclusive = xItem.Attribute("exclusive")?.Value;
+                    if (pattern != null || stateless != null)
+                    {
+                        items.Add(new(pattern, stateless, apply, exclusive));
+                    }
+                }
+            }
+
+            _config = new Config(enabled, compositeAccessibility, inclusives.ToArray(), exclusives.ToArray(), items.ToArray());
             WriteConfigToDebug();
 
             void WriteConfigToDebug()
             {
                 WriteDebug("======================Configuration Start======================");
-                WriteDebug($"                enabled: {enabled}");
-                WriteDebug($"composite-accessibility: {compositeAccessibility}");
-                WriteDebug($"      inclusive-methods: {inclusiveMethods}");
-                WriteDebug($"      exclusive-methods: {exclusiveMethods}");
-                WriteDebug($"    pooled-method-types: {pooledMethodTypes}");
-                WriteDebug($"           pooled-types: {pooledTypes}");
-                WriteDebug($"       non-pooled-types: {nonPooledTypes}");
+                WriteDebug(Config.ToString());
                 WriteDebug("=======================Configuration End=======================");
             }
         }
