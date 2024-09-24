@@ -236,6 +236,7 @@ namespace Pooling.Fody
                     case Code.Bgt_Un:
                     case Code.Ble_Un:
                     case Code.Blt_Un:
+                        break;
                     case Code.Switch:
                     case Code.Leave:
                     case Code.Leave_S:
@@ -374,7 +375,7 @@ namespace Pooling.Fody
                         {
                             if (!resetMethodDef.IsAbstract && !resetMethodDef.IsStatic &&
                                 !resetMethodDef.HasPInvokeInfo && !resetMethodDef.IsPInvokeImpl &&
-                                resetMethodDef.Parameters.Count == 0)
+                                resetMethodDef.GenericParameters.Count == 0 && resetMethodDef.Parameters.Count == 0)
                             {
                                 return new(newObj, typeRef, resetMethodDef);
                             }
@@ -405,21 +406,29 @@ namespace Pooling.Fody
         {
             var instructions = methodDef.Body.Instructions;
             var endFinallyOrLeave = handler.HandlerEnd.Previous;
+            Instruction? nextPoolItemRecycleStart = null;
             foreach (var poolItem in poolItems)
             {
                 var trPool = _trPool.MakeGenericInstanceType(this.Import(poolItem.ItemTypeRef));
                 var mrReturn = _mrReturn.WithGenericDeclaringType(trPool);
 
-                var tryResetFunc = _resetFuncManager.Create(poolItem.ResetMethodDef);
                 var genericArguments = poolItem.ItemTypeRef is GenericInstanceType git ? git.GenericArguments.ToArray() : [];
-
+                var blockStart = nextPoolItemRecycleStart == null ?
+                                    poolItem.Instruction.Clone() :
+                                    nextPoolItemRecycleStart.Set(poolItem.Instruction.OpCode, poolItem.Instruction.Operand);
+                nextPoolItemRecycleStart = Instruction.Create(OpCodes.Nop);
                 instructions.InsertBefore(endFinallyOrLeave, [
+                    blockStart,
+                    Instruction.Create(OpCodes.Brfalse, nextPoolItemRecycleStart),
+                    .. poolItem.CallResetMethod(this, genericArguments),
                     poolItem.Instruction,
-                    Instruction.Create(OpCodes.Brfalse, endFinallyOrLeave),
-                    poolItem.Instruction.Clone(),
-                    tryResetFunc.Load(genericArguments),
                     Instruction.Create(OpCodes.Call, mrReturn)
                 ]);
+            }
+
+            if (nextPoolItemRecycleStart != null)
+            {
+                instructions.InsertBefore(endFinallyOrLeave, nextPoolItemRecycleStart);
             }
         }
     }
