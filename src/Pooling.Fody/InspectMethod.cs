@@ -29,6 +29,13 @@ namespace Pooling.Fody
 
         private void InspectMethodCore(MethodDefinition methodDef, ITypeMatcher[] typeNonPooledMatcher, IMatcher[]? inclusiveMatchers, IMatcher[]? exclusiveMatchers)
         {
+            if (methodDef.IsAbstract) return;
+
+            // Windows api. Extern method with DllImportAttribute
+            if (methodDef.HasPInvokeInfo || methodDef.IsPInvokeImpl) return;
+
+            if (!methodDef.IsGetter && !methodDef.IsSetter && methodDef.IsCompilerGenerated()) return;
+
             var methodNonPooledMatcher = TryResolveNonPooledMatcher(methodDef.CustomAttributes);
             if (methodNonPooledMatcher == null) return;
 

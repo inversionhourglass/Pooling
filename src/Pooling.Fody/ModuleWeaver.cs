@@ -44,9 +44,6 @@ namespace Pooling.Fody
 
             foreach (var typeDef in ModuleDefinition.Types.ToArray())
             {
-                if (typeDef.IsEnum || typeDef.IsInterface || typeDef.IsArray || typeDef.IsDelegate() || !typeDef.HasMethods) continue;
-                if (typeDef.IsCompilerGenerated()) continue;
-
                 InspectType(typeDef);
             }
         }

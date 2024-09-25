@@ -9,6 +9,9 @@ namespace Pooling.Fody
     {
         private void InspectType(TypeDefinition typeDef)
         {
+            if (typeDef.IsEnum || typeDef.IsInterface || typeDef.IsArray || typeDef.IsDelegate() || !typeDef.HasMethods) return;
+            if (typeDef.IsCompilerGenerated()) return;
+
             var typeNonPooledMatcher = TryResolveNonPooledMatcher(typeDef.CustomAttributes);
             if (typeNonPooledMatcher == null) return;
 
@@ -20,13 +23,6 @@ namespace Pooling.Fody
 
             foreach (var methodDef in typeDef.Methods)
             {
-                if (methodDef.IsAbstract) continue;
-
-                // Windows api. Extern method with DllImportAttribute
-                if (methodDef.HasPInvokeInfo || methodDef.IsPInvokeImpl) continue;
-
-                if (!methodDef.IsGetter && !methodDef.IsSetter && methodDef.IsCompilerGenerated()) continue;
-
                 InspectMethod(methodDef, typeNonPooledMatcher, inclusiveMatchers, exclusiveMatchers);
             }
 
