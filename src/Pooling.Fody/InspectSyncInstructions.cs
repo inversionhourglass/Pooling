@@ -17,6 +17,8 @@ namespace Pooling.Fody
 
             if (poolItems.Length == 0) return;
 
+            SyncPooling(poolItems);
+
             var handler = methodDef.GetOrBuildOutermostExceptionHandler(ExceptionHandlerType.Finally);
 
             SyncPoolingRecycle(methodDef, handler, poolItems);
@@ -64,7 +66,8 @@ namespace Pooling.Fody
                         var allocatingPoolItem = counting.Decrease();
                         if (allocatingPoolItem != null)
                         {
-                            poolItems.Add(Pooling(allocatingPoolItem, instruction));
+                            allocatingPoolItem.Storing = instruction;
+                            poolItems.Add(allocatingPoolItem);
                         }
                         break;
                     case Code.Call:
@@ -331,7 +334,7 @@ namespace Pooling.Fody
                 if (!previous.IsLdloc()) return;
 
                 var variable = previous.ResolveVariable(methodDef);
-                poolItems.RemoveAll(x => x.Instruction.ResolveVariable(methodDef) == variable);
+                poolItems.RemoveAll(x => x.Storing != null && x.Storing.ResolveVariable(methodDef) == variable);
             }
         }
 
@@ -391,15 +394,18 @@ namespace Pooling.Fody
             return stateless == null ? null : new(newObj, typeRef);
         }
 
-        private PoolItem Pooling(PoolItem poolItem, Instruction allocating)
+        private void SyncPooling(PoolItem[] poolItems)
         {
-            var trPool = _trPool.MakeGenericInstanceType(this.Import(poolItem.ItemTypeRef));
-            var mrGet = _mrGet.WithGenericDeclaringType(trPool);
-            poolItem.Instruction.Set(OpCodes.Call, mrGet);
+            foreach (var poolItem in poolItems)
+            {
+                var trPool = _trPool.MakeGenericInstanceType(this.Import(poolItem.ItemTypeRef));
+                var mrGet = _mrGet.WithGenericDeclaringType(trPool);
+                poolItem.NewObj.Set(OpCodes.Call, mrGet);
 
-            poolItem.Instruction = allocating.Stloc2Ldloc();
+                if (poolItem.Storing == null) throw new FodyWeavingException("Failed to analyze the instructions; the instruction for storing the variable was not found.");
 
-            return poolItem;
+                poolItem.Loading = poolItem.Storing.Stloc2Ldloc();
+            }
         }
 
         private void SyncPoolingRecycle(MethodDefinition methodDef, ExceptionHandler handler, PoolItem[] poolItems)
@@ -414,14 +420,14 @@ namespace Pooling.Fody
 
                 var genericArguments = poolItem.ItemTypeRef is GenericInstanceType git ? git.GenericArguments.ToArray() : [];
                 var blockStart = nextPoolItemRecycleStart == null ?
-                                    poolItem.Instruction.Clone() :
-                                    nextPoolItemRecycleStart.Set(poolItem.Instruction.OpCode, poolItem.Instruction.Operand);
+                                    poolItem.Loading!.Clone() :
+                                    nextPoolItemRecycleStart.Set(poolItem.Loading!.OpCode, poolItem.Loading.Operand);
                 nextPoolItemRecycleStart = Instruction.Create(OpCodes.Nop);
                 instructions.InsertBefore(endFinallyOrLeave, [
                     blockStart,
                     Instruction.Create(OpCodes.Brfalse, nextPoolItemRecycleStart),
                     .. poolItem.CallResetMethod(this, genericArguments),
-                    poolItem.Instruction,
+                    poolItem.Loading,
                     Instruction.Create(OpCodes.Call, mrReturn)
                 ]);
             }
