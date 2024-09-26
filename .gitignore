@@ -328,3 +328,9 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Ignore all files in the Generated folder
+test/TestAssemblies/SingleFeatureCases/Cases/Generated/*
+
+# Except for CaseTemplate.tt
+!test/TestAssemblies/SingleFeatureCases/Cases/Generated/CaseTemplate.tt
