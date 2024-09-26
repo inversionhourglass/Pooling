@@ -225,7 +225,7 @@
             writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
             writer.WriteLine("        }");
             writer.WriteLine();
-            writer.WriteLine("        public static async IAsyncEnumerable<object?> AsyncIteraor()");
+            writer.WriteLine("        public async IAsyncEnumerable<object?> AsyncIteraor()");
             writer.WriteLine("        {");
             writer.WriteLine("            var pooling = PoolingResult.New();");
             writer.WriteLine();

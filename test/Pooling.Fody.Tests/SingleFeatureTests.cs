@@ -1,6 +1,7 @@
 ﻿using SingleFeatureCases;
 using SingleFeatureCases.Cases.Interfaces.I;
 using SingleFeatureCases.Cases.Interfaces.II;
+using SingleFeatureCases.Cases.NonPool;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -305,12 +306,12 @@ namespace Pooling.Fody.Tests
             var other1 = Assembly.GetInstance(typeof(Other1).FullName!, true);
             var other2 = Assembly.GetInstance(typeof(Other2).FullName!, true);
 
-            ((IEnumerable<object?>)nonPattern1.StaticIteraor()).ToArray();
-            ((IEnumerable<object?>)nonPattern2.StaticIteraor()).ToArray();
-            ((IEnumerable<object?>)nonTypes1.StaticIteraor()).ToArray();
-            ((IEnumerable<object?>)nonTypes2.StaticIteraor()).ToArray();
-            ((IEnumerable<object?>)other1.StaticIteraor()).ToArray();
-            ((IEnumerable<object?>)other2.StaticIteraor()).ToArray();
+            ((IEnumerable<object?>)nonPattern1.Iteraor()).ToArray();
+            ((IEnumerable<object?>)nonPattern2.Iteraor()).ToArray();
+            ((IEnumerable<object?>)nonTypes1.Iteraor()).ToArray();
+            ((IEnumerable<object?>)nonTypes2.Iteraor()).ToArray();
+            ((IEnumerable<object?>)other1.Iteraor()).ToArray();
+            ((IEnumerable<object?>)other2.Iteraor()).ToArray();
 
             AssertPoolingResult(sNonPattern1, sNonPattern2, sNonTypes1, sNonTypes2, sOther1, sOther2);
         }
@@ -360,6 +361,54 @@ namespace Pooling.Fody.Tests
             await ((IAsyncEnumerable<object?>)other2.AsyncIteraor()).ToArrayAsync();
 
             AssertPoolingResult(sNonPattern1, sNonPattern2, sNonTypes1, sNonTypes2, sOther1, sOther2);
+        }
+
+        [Fact]
+        public async Task WholeTypeNonPooledTest()
+        {
+            var sNonPoolWholeType = Assembly.GetStaticInstance(typeof(NonPoolWholeType).FullName!, true);
+
+            _ = sNonPoolWholeType.Activator;
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            var nonPoolWholeType = Assembly.GetInstance(typeof(NonPoolWholeType).FullName!, true);
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            _ = sNonPoolWholeType.StaticProp;
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            _ = nonPoolWholeType.Prop;
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            sNonPoolWholeType.set_StaticProp(null);
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            nonPoolWholeType.Prop = null;
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            sNonPoolWholeType.StaticSync();
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            nonPoolWholeType.Sync();
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            await (Task)sNonPoolWholeType.StaticAsync();
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            await (Task)nonPoolWholeType.Async();
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            ((IEnumerable<object?>)sNonPoolWholeType.StaticIteraor()).ToArray();
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            ((IEnumerable<object?>)nonPoolWholeType.Iteraor()).ToArray();
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            await ((IAsyncEnumerable<object?>)sNonPoolWholeType.StaticAsyncIteraor()).ToArrayAsync();
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+
+            await ((IAsyncEnumerable<object?>)nonPoolWholeType.AsyncIteraor()).ToArrayAsync();
+            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
         }
 
         private void AssertPoolingResult(params dynamic[] items)
