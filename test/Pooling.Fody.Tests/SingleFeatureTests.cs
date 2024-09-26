@@ -1,7 +1,11 @@
 ﻿using SingleFeatureCases;
+using SingleFeatureCases.Cases.Excepted;
 using SingleFeatureCases.Cases.Interfaces.I;
 using SingleFeatureCases.Cases.Interfaces.II;
 using SingleFeatureCases.Cases.NonPool;
+using SingleFeatureCases.ExceptedCases;
+using SingleFeatureCases.ExceptedCases.I;
+using SingleFeatureCases.IncludedCases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,10 +19,14 @@ namespace Pooling.Fody.Tests
     {
         private const string CONFIG = """
             <Pooling enabled="true" composite-accessibility="false">
-              <Inspect>
-              </Inspect>
-              <NotInspect>
-              </NotInspect>
+              <Inspects>
+                <Inspect>execution(* SingleFeatureCases.Cases..*(..))</Inspect>
+                <Inspect>execution(static void SingleFeatureCases.IncludedCases.IncludeSpecificMethod.Included())</Inspect>
+              </Inspects>
+              <NotInspects>
+                <NotInspect>execution(* SingleFeatureCases.ExceptedCases..*.*(..))</NotInspect>
+                <NotInspect>execution(* SingleFeatureCases.Cases.Excepted.Excepted3.*(..))</NotInspect>
+              </NotInspects>
               <Items>
               </Items>
             </Pooling>
@@ -440,6 +448,30 @@ namespace Pooling.Fody.Tests
 
             sNonPoolWholeMethod.MethodPatternFiltered();
             AssertPoolingResult(sNonPoolWholeMethod.PoolingResult);
+        }
+
+        [Fact]
+        public void GlobalInspectPatternTest()
+        {
+            var sExcepted1 = Assembly.GetStaticInstance(typeof(Excepted1).FullName!, true);
+            var sExcepted2 = Assembly.GetStaticInstance(typeof(Excepted2).FullName!, true);
+            var sExcepted3 = Assembly.GetStaticInstance(typeof(Excepted3).FullName!, true);
+            var sIncludeSpecificMethod = Assembly.GetStaticInstance(typeof(IncludeSpecificMethod).FullName!, true);
+
+            sExcepted1.M();
+            AssertPoolingResult(sExcepted1.PoolingResult);
+
+            sExcepted2.M();
+            AssertPoolingResult(sExcepted2.PoolingResult);
+
+            sExcepted3.M();
+            AssertPoolingResult(sExcepted3.PoolingResult);
+
+            sIncludeSpecificMethod.Included();
+            AssertPoolingResult(sIncludeSpecificMethod.PoolingResult);
+
+            sIncludeSpecificMethod.NotInclude();
+            AssertPoolingResult(sIncludeSpecificMethod.PoolingResult);
         }
 
         private void AssertPoolingResult(params dynamic[] items)
