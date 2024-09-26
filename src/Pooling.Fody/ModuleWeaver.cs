@@ -1,8 +1,6 @@
 ﻿using Cecil.AspectN.Matchers;
-using Cecil.AspectN.Patterns.Parsers;
 using Fody;
 using Mono.Cecil;
-using Pooling.Fody.AspectN.Patterns.Parsers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -87,9 +85,11 @@ namespace Pooling.Fody
                     {
                         if (property.Name == Constants.PROP_Types)
                         {
-                            if (property.Argument.Value is not TypeReference typeRef) throw new ArgumentException($"Cannot parse the Types property value of NonPooledAttribute to a TypeReference instance, the actual type is {property.Argument.Value.GetType()}");
-
-                            matchers.Add(new TypeReferenceMatcher(typeRef));
+                            if (property.Argument.Value is CustomAttributeArgument[] args)
+                            {
+                                var typeRefs = args.Select(x => x.Value is TypeReference typeRef ? new TypeReferenceMatcher(typeRef) : throw new ArgumentException($"Cannot parse the Types property value of NonPooledAttribute to a TypeReference instance, the actual type is {property.Argument.Value.GetType()}"));
+                                matchers.Add(typeRefs);
+                            }
                         }
                         else if (property.Name == Constants.PROP_Pattern)
                         {
