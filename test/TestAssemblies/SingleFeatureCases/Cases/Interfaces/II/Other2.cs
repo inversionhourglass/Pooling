@@ -1,5 +1,6 @@
 ﻿using Pooling;
 using SingleFeatureCases.PoolItems.Interfaces;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SingleFeatureCases.Cases.Interfaces.II
@@ -163,6 +164,78 @@ namespace SingleFeatureCases.Cases.Interfaces.II
             var nonPattern = new InterfaceNonPattern();
             var nonTypes = new InterfaceNonTypes();
             AvoidOptimize(any, non, nonPattern, nonTypes);
+
+            pooling.ShouldPooled(any, nonPattern, nonTypes);
+            pooling.ShouldNotPooled(non);
+            PoolingResult = pooling;
+        }
+
+        public static IEnumerable<object?> StaticIteraor()
+        {
+            var pooling = PoolingResult.New();
+
+            var any = new InterfaceAny();
+            yield return null;
+            var non = new InterfaceNon();
+            var nonPattern = new InterfaceNonPattern();
+            yield return null;
+            var nonTypes = new InterfaceNonTypes();
+            AvoidOptimize(any, non, nonPattern, nonTypes);
+
+            pooling.ShouldPooled(any, nonPattern, nonTypes);
+            pooling.ShouldNotPooled(non);
+            PoolingResult = pooling;
+        }
+
+        public IEnumerable<object?> Iteraor()
+        {
+            var pooling = PoolingResult.New();
+
+            var any = new InterfaceAny();
+            yield return null;
+            var non = new InterfaceNon();
+            var nonPattern = new InterfaceNonPattern();
+            yield return null;
+            var nonTypes = new InterfaceNonTypes();
+            AvoidOptimize(any, non, nonPattern, nonTypes);
+
+            pooling.ShouldPooled(any, nonPattern, nonTypes);
+            pooling.ShouldNotPooled(non);
+            PoolingResult = pooling;
+        }
+
+        public static async IAsyncEnumerable<object?> StaticAsyncIteraor()
+        {
+            var pooling = PoolingResult.New();
+
+            var any = new InterfaceAny();
+            yield return null;
+            var non = new InterfaceNon();
+            var nonPattern = new InterfaceNonPattern();
+            yield return null;
+            var nonTypes = new InterfaceNonTypes();
+            AvoidOptimize(any, non, nonPattern, nonTypes);
+
+            await Task.Yield();
+
+            pooling.ShouldPooled(any, nonPattern, nonTypes);
+            pooling.ShouldNotPooled(non);
+            PoolingResult = pooling;
+        }
+
+        public static async IAsyncEnumerable<object?> AsyncIteraor()
+        {
+            var pooling = PoolingResult.New();
+
+            var any = new InterfaceAny();
+            yield return null;
+            var non = new InterfaceNon();
+            var nonPattern = new InterfaceNonPattern();
+            yield return null;
+            var nonTypes = new InterfaceNonTypes();
+            AvoidOptimize(any, non, nonPattern, nonTypes);
+
+            await Task.Yield();
 
             pooling.ShouldPooled(any, nonPattern, nonTypes);
             pooling.ShouldNotPooled(non);
