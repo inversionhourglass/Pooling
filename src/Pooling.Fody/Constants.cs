@@ -8,6 +8,8 @@
 
         public const string PROP_Types = "Types";
         public const string PROP_Pattern = "Pattern";
+        public const string PROP_ExclusiveTypes = "ExclusiveTypes";
+        public const string PROP_ExclusivePattern = "ExclusivePattern";
 
         public const string METHOD_Get = "Get";
         public const string METHOD_Return = "Return";

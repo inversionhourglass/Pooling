@@ -8,11 +8,14 @@ namespace Pooling
     public interface IPoolItem
     {
         /// <summary>
-        /// 
+        /// Which types you do not want to pool.
         /// </summary>
-        Type[]? NonPooledTypes { get; }
+        Type[]? ExclusiveTypes { get; }
 
-        string? NonPooledTypePattern { get; }
+        /// <summary>
+        /// AspctN pattern. Which methods you do not want to pool.
+        /// </summary>
+        string? ExclusivePattern { get; }
 
         /// <summary>
         /// Reset the object to a neutral state, semantically similar to when the object was first constructed.

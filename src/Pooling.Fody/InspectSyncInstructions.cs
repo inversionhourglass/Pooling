@@ -366,7 +366,8 @@ namespace Pooling.Fody
 
             if (typeRef.Implement(Constants.TYPE_IPoolItem))
             {
-                return new(newObj, typeRef);
+                var exclusive = PoolItemExclusive.Resolve(typeRef);
+                return exclusive.IsExcluded(methodSignature) ? null : new(newObj, typeRef);
             }
 
             ITypeMatcher? stateless = null;
