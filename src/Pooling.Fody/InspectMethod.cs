@@ -10,11 +10,11 @@ namespace Pooling.Fody
 {
     partial class ModuleWeaver
     {
-        private void InspectMethod(MethodDefinition methodDef, ITypeMatcher[] typeNonPooledMatcher, IMatcher[]? inclusiveMatchers, IMatcher[]? exclusiveMatchers)
+        private void InspectMethod(MethodDefinition methodDef, ITypeMatcher[] typeNonPooledMatcher, IMatcher[]? inspectMatchers, IMatcher[]? notInspectMatchers)
         {
             try
             {
-                InspectMethodCore(methodDef, typeNonPooledMatcher, inclusiveMatchers, exclusiveMatchers);
+                InspectMethodCore(methodDef, typeNonPooledMatcher, inspectMatchers, notInspectMatchers);
             }
             catch (FodyWeavingException ex)
             {
@@ -27,7 +27,7 @@ namespace Pooling.Fody
             }
         }
 
-        private void InspectMethodCore(MethodDefinition methodDef, ITypeMatcher[] typeNonPooledMatcher, IMatcher[]? inclusiveMatchers, IMatcher[]? exclusiveMatchers)
+        private void InspectMethodCore(MethodDefinition methodDef, ITypeMatcher[] typeNonPooledMatcher, IMatcher[]? inspectMatchers, IMatcher[]? notInspectMatchers)
         {
             if (methodDef.IsAbstract) return;
 
@@ -41,16 +41,16 @@ namespace Pooling.Fody
 
             var signature = SignatureParser.ParseMethod(methodDef, _config.CompositeAccessibility);
 
-            if (IsExcluded(signature, exclusiveMatchers)) return;
+            if (IsExcluded(signature, notInspectMatchers)) return;
 
-            if (!IsIncluded(signature, inclusiveMatchers)) return;
+            if (!IsIncluded(signature, inspectMatchers)) return;
 
             var items = new List<Config.Item>();
             foreach (var item in _config.Items)
             {
-                if (item.Exclusive != null && item.Exclusive.IsMatch(signature)) continue;
+                if (item.NotInspect != null && item.NotInspect.IsMatch(signature)) continue;
 
-                if (item.Apply != null && !item.Apply.IsMatch(signature)) continue;
+                if (item.Inspect != null && !item.Inspect.IsMatch(signature)) continue;
 
                 items.Add(item);
             }
@@ -61,30 +61,30 @@ namespace Pooling.Fody
             }
             else
             {
-                InspectSyncInstructions(methodDef, typeNonPooledMatcher, methodNonPooledMatcher, items.ToArray());
+                InspectSyncInstructions(signature, typeNonPooledMatcher, methodNonPooledMatcher, items.ToArray());
             }
         }
 
-        private bool IsExcluded(MethodSignature signature, IMatcher[]? exclusiveMatchers)
+        private bool IsExcluded(MethodSignature signature, IMatcher[]? notInspectMatchers)
         {
-            var exclusiveMatcher = exclusiveMatchers?.FirstOrDefault(x => x.IsMatch(signature));
-            if (exclusiveMatcher != null)
+            var notInspectMatcher = notInspectMatchers?.FirstOrDefault(x => x.IsMatch(signature));
+            if (notInspectMatcher != null)
             {
-                WriteDebug($"{signature.Definition} is excluded by the global exclusive pattern ({exclusiveMatcher}).");
+                WriteDebug($"{signature.Definition} is excluded by the global NotInspect pattern ({notInspectMatcher}).");
                 return true;
             }
 
             return false;
         }
 
-        private bool IsIncluded(MethodSignature signature, IMatcher[]? inclusiveMatchers)
+        private bool IsIncluded(MethodSignature signature, IMatcher[]? inspectMatchers)
         {
-            if (inclusiveMatchers != null)
+            if (inspectMatchers != null)
             {
-                var inclusiveMatcher = inclusiveMatchers.FirstOrDefault(x => x.IsMatch(signature));
-                if (inclusiveMatcher == null)
+                var inspectMatcher = inspectMatchers.FirstOrDefault(x => x.IsMatch(signature));
+                if (inspectMatcher == null)
                 {
-                    WriteDebug($"{signature.Definition} is not included in the global inclusive pattern ({inclusiveMatcher}).");
+                    WriteDebug($"{signature.Definition} is not included in the global Inspect pattern ({inspectMatcher}).");
                     return false;
                 }
             }

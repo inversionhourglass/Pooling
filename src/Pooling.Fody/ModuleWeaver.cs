@@ -113,29 +113,29 @@ namespace Pooling.Fody
 
             var enabled = GetConfigValue("true", "enabled");
             var compositeAccessibility = GetConfigValue("false", "composite-accessibility");
-            var inclusives = new List<string>();
-            var exclusives = new List<string>();
+            var inspects = new List<string>();
+            var notInspects = new List<string>();
             var items = new List<Config.Item>();
-            var xInclusives = Config.Element("Inclusives");
-            var xExclusives = Config.Element("Exclusives");
+            var xInspects = Config.Element("Inspects");
+            var xNotInspects = Config.Element("NotInspects");
             var xItems = Config.Element("Items");
-            if (xInclusives != null)
+            if (xInspects != null)
             {
-                foreach (var xInclusive in xInclusives.Elements())
+                foreach (var xInspect in xInspects.Elements())
                 {
-                    if (xInclusive.Name == "Inclusive" && !string.IsNullOrEmpty(xInclusive.Value))
+                    if (xInspect.Name == "Inspect" && !string.IsNullOrEmpty(xInspect.Value))
                     {
-                        inclusives.Add(xInclusive.Value);
+                        inspects.Add(xInspect.Value);
                     }
                 }
             }
-            if (xExclusives != null)
+            if (xNotInspects != null)
             {
-                foreach (var xExclusive in xExclusives.Elements())
+                foreach (var xNotInspect in xNotInspects.Elements())
                 {
-                    if (xExclusive.Name == "Exclusive" && !string.IsNullOrEmpty(xExclusive.Value))
+                    if (xNotInspect.Name == "NotInspect" && !string.IsNullOrEmpty(xNotInspect.Value))
                     {
-                        exclusives.Add(xExclusive.Value);
+                        notInspects.Add(xNotInspect.Value);
                     }
                 }
             }
@@ -147,16 +147,16 @@ namespace Pooling.Fody
 
                     var pattern = xItem.Attribute("pattern")?.Value;
                     var stateless = xItem.Attribute("stateless")?.Value;
-                    var apply = xItem.Attribute("apply")?.Value;
-                    var exclusive = xItem.Attribute("exclusive")?.Value;
+                    var inspect = xItem.Attribute("inspect")?.Value;
+                    var notInspect = xItem.Attribute("not-inspect")?.Value;
                     if (pattern != null || stateless != null)
                     {
-                        items.Add(new(pattern, stateless, apply, exclusive));
+                        items.Add(new(pattern, stateless, inspect, notInspect));
                     }
                 }
             }
 
-            _config = new Config(enabled, compositeAccessibility, inclusives.ToArray(), exclusives.ToArray(), items.ToArray());
+            _config = new Config(enabled, compositeAccessibility, inspects.ToArray(), notInspects.ToArray(), items.ToArray());
             WriteConfigToDebug();
 
             void WriteConfigToDebug()

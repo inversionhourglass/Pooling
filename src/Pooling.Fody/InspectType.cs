@@ -16,14 +16,14 @@ namespace Pooling.Fody
             if (typeNonPooledMatcher == null) return;
 
             var typeSignature = SignatureParser.ParseType(typeDef);
-            var inclusiveMatchers = MatchType(_config.Inclusives, typeSignature);
-            if (inclusiveMatchers != null && inclusiveMatchers.Length == 0) return; // 存在inclusive表达式，但是一个都匹配不上，那么当前类型就不在池化检测范围
+            var inspectMatchers = MatchType(_config.Inspects, typeSignature);
+            if (inspectMatchers != null && inspectMatchers.Length == 0) return; // 存在inspect表达式，但是一个都匹配不上，那么当前类型就不在池化检测范围
             
-            var exclusiveMatchers = MatchType(_config.Exclusives, typeSignature);
+            var notInspectMatchers = MatchType(_config.NotInspects, typeSignature);
 
             foreach (var methodDef in typeDef.Methods)
             {
-                InspectMethod(methodDef, typeNonPooledMatcher, inclusiveMatchers, exclusiveMatchers);
+                InspectMethod(methodDef, typeNonPooledMatcher, inspectMatchers, notInspectMatchers);
             }
 
             if (typeDef.HasNestedTypes)

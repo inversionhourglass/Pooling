@@ -7,24 +7,24 @@ namespace Pooling.Fody
 {
     /**
      * <Pooling enabled="true" composite-accessibility="false">
-     *   <Inclusives>
-     *     <Inclusive>any_aspectn_pattern</Inclusive>
-     *     <Inclusive>any_aspectn_pattern</Inclusive>
-     *   </Inclusives>
-     *   <Exclusives>
-     *     <Exclusive>any_aspectn_pattern</Exclusive>
-     *     <Exclusive>any_aspectn_pattern</Exclusive>
-     *   </Exclusives>
+     *   <Inspects>
+     *     <Inspect>any_aspectn_pattern</Inspect>
+     *     <Inspect>any_aspectn_pattern</Inspect>
+     *   </Inspects>
+     *   <NotInspects>
+     *     <NotInspect>any_aspectn_pattern</NotInspect>
+     *     <NotInspect>any_aspectn_pattern</NotInspect>
+     *   </NotInspects>
      *   <Items>
-     *     <Item pattern="method_pattern_without_symbols" stateless="type_pattern" apply="any_aspectn_pattern" exclusive="any_aspectn_pattern" />
-     *     <Item pattern="method_pattern_without_symbols" stateless="type_pattern" apply="any_aspectn_pattern" exclusive="any_aspectn_pattern" />
+     *     <Item pattern="method_pattern_without_symbols" stateless="type_pattern" inspect="any_aspectn_pattern" not-inspect="any_aspectn_pattern" />
+     *     <Item pattern="method_pattern_without_symbols" stateless="type_pattern" inspect="any_aspectn_pattern" not-inspect="any_aspectn_pattern" />
      *   </Items>
      * </Pooling>
      */
 
     /// <summary>
     /// </summary>
-    public class Config(string enabled, string compositeAccessibility, string[] inclusives, string[] exclusives, Config.Item[] items)
+    public class Config(string enabled, string compositeAccessibility, string[] inspects, string[] notInspects, Config.Item[] items)
     {
         /// <summary>
         /// enabled. 是否启用Pooling
@@ -36,13 +36,13 @@ namespace Pooling.Fody
         /// </summary>
         public bool CompositeAccessibility { get; } = "true".Equals(compositeAccessibility, StringComparison.OrdinalIgnoreCase);
 
-        public IMatcher[] Inclusives { get; } = inclusives.Select(x => PatternParser.Parse(x).Cached()).ToArray();
+        public IMatcher[] Inspects { get; } = inspects.Select(x => PatternParser.Parse(x).Cached()).ToArray();
 
-        public IMatcher[] Exclusives { get; } = exclusives.Select(x => PatternParser.Parse(x).Cached()).ToArray();
+        public IMatcher[] NotInspects { get; } = notInspects.Select(x => PatternParser.Parse(x).Cached()).ToArray();
 
         public Item[] Items { get; } = items;
 
-        public class Item(string? pattern, string? stateless, string? apply, string? exclusive)
+        public class Item(string? pattern, string? stateless, string? inspect, string? notInspect)
         {
             /// <summary>
             /// 池化对象表达式。该表达式格式固定为`method()`格式，其中类型部分匹配池化对象，方法部分匹配重置方法
@@ -66,7 +66,7 @@ namespace Pooling.Fody
             /// <remarks>
             /// 该表达式缺省时表示匹配当前程序集的所有方法（包含属性和构造方法），表达式格式可用AspectN方法匹配规则中的任意一种或多种的组合
             /// </remarks>
-            public IMatcher? Apply { get; } = string.IsNullOrEmpty(apply) ? null : PatternParser.Parse(apply!).Cached();
+            public IMatcher? Inspect { get; } = string.IsNullOrEmpty(inspect) ? null : PatternParser.Parse(inspect!).Cached();
 
             /// <summary>
             /// 排除的池化应用目标表达式。匹配哪些方法/属性/构造方法不需要对当前池化对象进行检查
@@ -74,7 +74,7 @@ namespace Pooling.Fody
             /// <remarks>
             /// 表达式格式可用AspectN方法匹配规则中的任意一种或多种的组合
             /// </remarks>
-            public IMatcher? Exclusive { get; } = string.IsNullOrEmpty(exclusive) ? null : PatternParser.Parse(exclusive!).Cached();
+            public IMatcher? NotInspect { get; } = string.IsNullOrEmpty(notInspect) ? null : PatternParser.Parse(notInspect!).Cached();
         }
     }
 }

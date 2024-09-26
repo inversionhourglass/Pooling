@@ -11,9 +11,10 @@ namespace Pooling.Fody
 {
     partial class ModuleWeaver
     {
-        private void InspectSyncInstructions(MethodDefinition methodDef, ITypeMatcher[] typeNonPooledMatcher, ITypeMatcher[] methodNonPooledMatcher, Config.Item[] items)
+        private void InspectSyncInstructions(MethodSignature methodSignature, ITypeMatcher[] typeNonPooledMatcher, ITypeMatcher[] methodNonPooledMatcher, Config.Item[] items)
         {
-            var poolItems = SyncAnalysisPoolItems(methodDef, typeNonPooledMatcher, methodNonPooledMatcher, items);
+            var methodDef = methodSignature.Definition;
+            var poolItems = SyncAnalysisPoolItems(methodSignature, typeNonPooledMatcher, methodNonPooledMatcher, items);
 
             if (poolItems.Length == 0) return;
 
@@ -27,10 +28,11 @@ namespace Pooling.Fody
             methodDef.Body.OptimizePlus();
         }
 
-        private PoolItem[] SyncAnalysisPoolItems(MethodDefinition methodDef, ITypeMatcher[] typeNonPooledMatcher, ITypeMatcher[] methodNonPooledMatcher, Config.Item[] items)
+        private PoolItem[] SyncAnalysisPoolItems(MethodSignature methodSignature, ITypeMatcher[] typeNonPooledMatcher, ITypeMatcher[] methodNonPooledMatcher, Config.Item[] items)
         {
             var counting = new StackCounting();
             var poolItems = new List<PoolItem>();
+            var methodDef = methodSignature.Definition;
             var instruction = methodDef.GetFirstInstruction();
 
             while (instruction != null)
@@ -51,7 +53,7 @@ namespace Pooling.Fody
                         throw new FodyWeavingException($"Please share your assembly with me; there is an instruction 'no.' that I have never encountered before, offset: {instruction.Offset}.");
                     case Code.Newobj:
                         counting.Increase();
-                        var detectedPoolItem = InspectSyncInstruction(methodDef, instruction, typeNonPooledMatcher, methodNonPooledMatcher, items);
+                        var detectedPoolItem = InspectSyncInstruction(methodSignature, instruction, typeNonPooledMatcher, methodNonPooledMatcher, items);
                         if (detectedPoolItem != null)
                         {
                             counting.Add(detectedPoolItem);
@@ -338,10 +340,11 @@ namespace Pooling.Fody
             }
         }
 
-        private PoolItem? InspectSyncInstruction(MethodDefinition methodDef, Instruction newObj, ITypeMatcher[] typeNonPooledMatcher, ITypeMatcher[] methodNonPooledMatcher, Config.Item[] poolItems)
+        private PoolItem? InspectSyncInstruction(MethodSignature methodSignature, Instruction newObj, ITypeMatcher[] typeNonPooledMatcher, ITypeMatcher[] methodNonPooledMatcher, Config.Item[] poolItems)
         {
             if (newObj.Operand is not MethodReference ctor || ctor.Parameters.Count != 0) return null;
 
+            var methodDef = methodSignature.Definition;
             var typeRef = ctor.DeclaringType;
             var typeSignature = SignatureParser.ParseType(typeRef);
 
