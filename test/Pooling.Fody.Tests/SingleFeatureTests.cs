@@ -364,51 +364,82 @@ namespace Pooling.Fody.Tests
         }
 
         [Fact]
-        public async Task WholeTypeNonPooledTest()
+        public async Task WholeClassNonPooledTest()
         {
-            var sNonPoolWholeType = Assembly.GetStaticInstance(typeof(NonPoolWholeType).FullName!, true);
+            var sNonPoolWholeClass = Assembly.GetStaticInstance(typeof(NonPoolWholeClass).FullName!, true);
 
-            _ = sNonPoolWholeType.Activator;
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            _ = sNonPoolWholeClass.Activator;
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            var nonPoolWholeType = Assembly.GetInstance(typeof(NonPoolWholeType).FullName!, true);
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            var nonPoolWholeClass = Assembly.GetInstance(typeof(NonPoolWholeClass).FullName!, true);
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            _ = sNonPoolWholeType.StaticProp;
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            _ = sNonPoolWholeClass.StaticProp;
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            _ = nonPoolWholeType.Prop;
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            _ = nonPoolWholeClass.Prop;
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            sNonPoolWholeType.set_StaticProp(null);
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            sNonPoolWholeClass.set_StaticProp(null);
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            nonPoolWholeType.Prop = null;
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            nonPoolWholeClass.Prop = null;
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            sNonPoolWholeType.StaticSync();
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            sNonPoolWholeClass.StaticSync();
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            nonPoolWholeType.Sync();
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            nonPoolWholeClass.Sync();
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            await (Task)sNonPoolWholeType.StaticAsync();
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            await (Task)sNonPoolWholeClass.StaticAsync();
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            await (Task)nonPoolWholeType.Async();
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            await (Task)nonPoolWholeClass.Async();
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            ((IEnumerable<object?>)sNonPoolWholeType.StaticIteraor()).ToArray();
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            ((IEnumerable<object?>)sNonPoolWholeClass.StaticIteraor()).ToArray();
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            ((IEnumerable<object?>)nonPoolWholeType.Iteraor()).ToArray();
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            ((IEnumerable<object?>)nonPoolWholeClass.Iteraor()).ToArray();
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            await ((IAsyncEnumerable<object?>)sNonPoolWholeType.StaticAsyncIteraor()).ToArrayAsync();
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            await ((IAsyncEnumerable<object?>)sNonPoolWholeClass.StaticAsyncIteraor()).ToArrayAsync();
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
 
-            await ((IAsyncEnumerable<object?>)nonPoolWholeType.AsyncIteraor()).ToArrayAsync();
-            AssertPoolingResult(sNonPoolWholeType.PoolingResult);
+            await ((IAsyncEnumerable<object?>)nonPoolWholeClass.AsyncIteraor()).ToArrayAsync();
+            AssertPoolingResult(sNonPoolWholeClass.PoolingResult);
+        }
+
+        [Fact]
+        public void WholeMethodNonPooledTest()
+        {
+            var sNonPoolWholeMethod = Assembly.GetStaticInstance(typeof(NonPoolWholeMethod).FullName!, true);
+            var nonPoolWholeMethod = Assembly.GetInstance(typeof(NonPoolWholeMethod).FullName!, true);
+
+            nonPoolWholeMethod.NonPool();
+            AssertPoolingResult(sNonPoolWholeMethod.PoolingResult);
+
+            nonPoolWholeMethod.Pooled();
+            AssertPoolingResult(sNonPoolWholeMethod.PoolingResult);
+        }
+
+        [Fact]
+        public void FilteredNonPooledTest()
+        {
+            var sNonPoolWholeMethod = Assembly.GetStaticInstance(typeof(NonPoolFiltered).FullName!, true);
+
+            sNonPoolWholeMethod.AssemblyFiltered();
+            AssertPoolingResult(sNonPoolWholeMethod.PoolingResult);
+
+            sNonPoolWholeMethod.ClassFiltered();
+            AssertPoolingResult(sNonPoolWholeMethod.PoolingResult);
+
+            sNonPoolWholeMethod.MethodTypeFiltered();
+            AssertPoolingResult(sNonPoolWholeMethod.PoolingResult);
+
+            sNonPoolWholeMethod.MethodPatternFiltered();
+            AssertPoolingResult(sNonPoolWholeMethod.PoolingResult);
         }
 
         private void AssertPoolingResult(params dynamic[] items)

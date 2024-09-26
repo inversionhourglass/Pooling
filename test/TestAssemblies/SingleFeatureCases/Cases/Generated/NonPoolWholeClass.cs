@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace SingleFeatureCases.Cases.NonPool
 {
-    public partial class NonPoolWholeType : Stateful<NonPoolWholeType>
+    public partial class NonPoolWholeClass : Stateful<NonPoolWholeClass>
     {
         [NonPooled]
         public static object? Activator { get; }
 
-        static NonPoolWholeType()
+        static NonPoolWholeClass()
         {
             var pooling = PoolingResult.New();
 
@@ -23,7 +23,7 @@ namespace SingleFeatureCases.Cases.NonPool
             SetPoolingResult(pooling, any, non, nonPattern, nonTypes);
         }
 
-        public NonPoolWholeType()
+        public NonPoolWholeClass()
         {
             var pooling = PoolingResult.New();
 

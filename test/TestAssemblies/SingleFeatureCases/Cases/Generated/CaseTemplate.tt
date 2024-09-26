@@ -15,7 +15,7 @@
         ("SingleFeatureCases.Cases.Interfaces.II", "NonPattern2"),
         ("SingleFeatureCases.Cases.Interfaces.II", "NonTypes2"),
         ("SingleFeatureCases.Cases.Interfaces.II", "Other2"),
-        ("SingleFeatureCases.Cases.NonPool", "NonPoolWholeType"),
+        ("SingleFeatureCases.Cases.NonPool", "NonPoolWholeClass"),
     };
 
     foreach (var (ns, className) in cases)
