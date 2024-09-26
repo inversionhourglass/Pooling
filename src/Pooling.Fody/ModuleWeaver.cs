@@ -38,8 +38,6 @@ namespace Pooling.Fody
         {
             if (TryResolveAssemblyNonPooledMatcher()) return;
 
-            Parser.TypePrefixParsers.Add(new ForceResetTypePrefixParser());
-
             _resetFuncManager = new(this, _tBooleanRef);
 
             foreach (var typeDef in ModuleDefinition.Types.ToArray())
