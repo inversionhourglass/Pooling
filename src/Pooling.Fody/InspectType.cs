@@ -39,7 +39,7 @@ namespace Pooling.Fody
         {
             if (matchers.Length == 0) return null;
 
-            return matchers.Where(x => !x.SupportDeclaringTypeMatch || x.DeclaringTypeMatcher.IsMatch(typeSignature)).ToArray();
+            return matchers.Where(x => x is not ExecutionMatcher || !x.SupportDeclaringTypeMatch || x.DeclaringTypeMatcher.IsMatch(typeSignature)).ToArray();
         }
     }
 }
