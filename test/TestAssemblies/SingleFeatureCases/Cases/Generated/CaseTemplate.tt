@@ -1,0 +1,250 @@
+﻿<#@ template debug="true" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".txt" #>
+
+<#
+    var cases = new List<(string ns, string name)>
+    {
+        ("SingleFeatureCases.Cases.Interfaces.I", "NonPattern1"),
+        ("SingleFeatureCases.Cases.Interfaces.I", "NonTypes1"),
+        ("SingleFeatureCases.Cases.Interfaces.I", "Other1"),
+        ("SingleFeatureCases.Cases.Interfaces.II", "NonPattern2"),
+        ("SingleFeatureCases.Cases.Interfaces.II", "NonTypes2"),
+        ("SingleFeatureCases.Cases.Interfaces.II", "Other2"),
+        ("SingleFeatureCases.Cases.NonPool", "NonPoolWholeType"),
+    };
+
+    foreach (var (ns, className) in cases)
+    {
+        string fileName = $"{className}.cs";
+        string filePath = Host.ResolvePath("");
+        using (StreamWriter writer = new StreamWriter(Path.Combine(filePath, fileName)))
+        {
+#>
+<#
+            writer.WriteLine("using Pooling;");
+            writer.WriteLine("using SingleFeatureCases.PoolItems.Interfaces;");
+            writer.WriteLine("using System.Collections.Generic;");
+            writer.WriteLine("using System.Threading.Tasks;");
+            writer.WriteLine();
+            writer.WriteLine($"namespace {ns}");
+            writer.WriteLine("{");
+            writer.WriteLine($"    public partial class {className} : Stateful<{className}>");
+            writer.WriteLine("    {");
+            writer.WriteLine("        [NonPooled]");
+            writer.WriteLine("        public static object? Activator { get; }");
+            writer.WriteLine();
+            writer.WriteLine($"        static {className}()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine($"        public {className}()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public object? Prop");
+            writer.WriteLine("        {");
+            writer.WriteLine("            get");
+            writer.WriteLine("            {");
+            writer.WriteLine("                var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("                var any = new InterfaceAny();");
+            writer.WriteLine("                var non = new InterfaceNon();");
+            writer.WriteLine("                var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("                var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("                AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("                SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("                return default;");
+            writer.WriteLine("            }");
+            writer.WriteLine("            set");
+            writer.WriteLine("            {");
+            writer.WriteLine("                var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("                var any = new InterfaceAny();");
+            writer.WriteLine("                var non = new InterfaceNon();");
+            writer.WriteLine("                var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("                var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("                AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("                SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("            }");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public static object? StaticProp");
+            writer.WriteLine("        {");
+            writer.WriteLine("            get");
+            writer.WriteLine("            {");
+            writer.WriteLine("                var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("                var any = new InterfaceAny();");
+            writer.WriteLine("                var non = new InterfaceNon();");
+            writer.WriteLine("                var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("                var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("                AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("                SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("                return default;");
+            writer.WriteLine("            }");
+            writer.WriteLine("            set");
+            writer.WriteLine("            {");
+            writer.WriteLine("                var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("                var any = new InterfaceAny();");
+            writer.WriteLine("                var non = new InterfaceNon();");
+            writer.WriteLine("                var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("                var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("                AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("                SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("            }");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public void Sync()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public static void StaticSync()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public async Task Async()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            await Task.Yield();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public static async Task StaticAsync()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            await Task.Yield();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public static IEnumerable<object?> StaticIteraor()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            yield return null;");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            yield return null;");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public IEnumerable<object?> Iteraor()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            yield return null;");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            yield return null;");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public static async IAsyncEnumerable<object?> StaticAsyncIteraor()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            yield return null;");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            yield return null;");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            await Task.Yield();");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine();
+            writer.WriteLine("        public static async IAsyncEnumerable<object?> AsyncIteraor()");
+            writer.WriteLine("        {");
+            writer.WriteLine("            var pooling = PoolingResult.New();");
+            writer.WriteLine();
+            writer.WriteLine("            var any = new InterfaceAny();");
+            writer.WriteLine("            yield return null;");
+            writer.WriteLine("            var non = new InterfaceNon();");
+            writer.WriteLine("            var nonPattern = new InterfaceNonPattern();");
+            writer.WriteLine("            yield return null;");
+            writer.WriteLine("            var nonTypes = new InterfaceNonTypes();");
+            writer.WriteLine("            AvoidOptimize(any, non, nonPattern, nonTypes);");
+            writer.WriteLine();
+            writer.WriteLine("            await Task.Yield();");
+            writer.WriteLine();
+            writer.WriteLine("            SetPoolingResult(pooling, any, non, nonPattern, nonTypes);");
+            writer.WriteLine("        }");
+            writer.WriteLine("    }");
+            writer.WriteLine("}");
+#>
+<#
+        }
+    }
+#>

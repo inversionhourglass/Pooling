@@ -9,11 +9,35 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Cases\Generated\CaseTemplate.txt">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CaseTemplate.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Pooling\Pooling.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Cases\Generated\CaseTemplate.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CaseTemplate.txt</LastGenOutput>
+    </None>
+    <None Update="Cases\Generated\CaseTemplate.txt">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CaseTemplate.tt</DependentUpon>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
 </Project>
