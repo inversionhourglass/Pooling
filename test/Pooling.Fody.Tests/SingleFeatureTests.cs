@@ -18,6 +18,7 @@ using Xunit;
 
 namespace Pooling.Fody.Tests
 {
+    [TestCaseOrderer("Pooling.Fody.Tests.CctorFirstTestCaseOrderer", "Pooling.Fody.Tests")]
     public class SingleFeatureTests
     {
         private const string CONFIG = """
