@@ -5,7 +5,10 @@ using System.Threading;
 
 namespace Pooling
 {
-    internal class DefaultPool<T> : IPool<T>, IDisposable where T : class, new()
+    /// <summary>
+    /// <see cref="IPool{T}"/> defualt implementation.
+    /// </summary>
+    public class DefaultPool<T> : IPool<T>, IDisposable where T : class, new()
     {
         private readonly Lazy<Func<T, bool>> _resetFunc;
         private readonly int _maxCapacity;
@@ -16,6 +19,8 @@ namespace Pooling
 
         private volatile bool _isDisposed;
 
+        /// <summary>
+        /// </summary>
         public DefaultPool()
         {
             _resetFunc = new(ResolveReset);
@@ -23,6 +28,9 @@ namespace Pooling
             _maxCapacity = maximumRetained - 1;
         }
 
+        /// <summary>
+        /// Get <typeparamref name="T"/> instance from the pool.
+        /// </summary>
         public T Get()
         {
             if (_isDisposed) throw new ObjectDisposedException(GetType().Name);
@@ -42,6 +50,9 @@ namespace Pooling
             return item;
         }
 
+        /// <summary>
+        /// Return <paramref name="value"/> back to the pool.
+        /// </summary>
         public void Return(T value)
         {
             if (!_isDisposed && TryReset(value))
@@ -86,6 +97,9 @@ namespace Pooling
             bool SucceedReset(T value) => true;
         }
 
+        /// <summary>
+        /// Call <see cref="IDisposable.Dispose"/> for each pool item if it implements <see cref="IDisposable"/>.
+        /// </summary>
         public void Dispose()
         {
             _isDisposed = true;
