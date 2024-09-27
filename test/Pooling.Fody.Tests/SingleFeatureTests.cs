@@ -5,6 +5,7 @@ using SingleFeatureCases.Cases.Excepted;
 using SingleFeatureCases.Cases.Interfaces.I;
 using SingleFeatureCases.Cases.Interfaces.II;
 using SingleFeatureCases.Cases.NonPool;
+using SingleFeatureCases.Cases.Occupies;
 using SingleFeatureCases.Cases.Optimizes;
 using SingleFeatureCases.ExceptedCases;
 using SingleFeatureCases.ExceptedCases.I;
@@ -529,6 +530,26 @@ namespace Pooling.Fody.Tests
 
             sReuseTryFinally.M();
             AssertPoolingResult(sReuseTryFinally.PoolingResult);
+        }
+
+        [Fact]
+        public void OccupyTest()
+        {
+            var sOccupied = Assembly.GetStaticInstance(typeof(Occupied).FullName!, true);
+            var occupied = Assembly.GetInstance(typeof(Occupied).FullName!, true);
+
+            occupied.Sync();
+            AssertPoolingResult(sOccupied.PoolingResult);
+        }
+
+        [Fact]
+        public async Task AsyncOccupyTest()
+        {
+            var sOccupied = Assembly.GetStaticInstance(typeof(Occupied).FullName!, true);
+            var occupied = Assembly.GetInstance(typeof(Occupied).FullName!, true);
+
+            await (Task)occupied.Async();
+            AssertPoolingResult(sOccupied.PoolingResult);
         }
 
         private void AssertPoolingResult(params dynamic[] items)
