@@ -16,8 +16,8 @@ namespace Pooling.Fody
      *     <NotInspect>any_aspectn_pattern</NotInspect>
      *   </NotInspects>
      *   <Items>
-     *     <Item pattern="method_pattern_without_symbols" stateless="type_pattern" inspect="any_aspectn_pattern" not-inspect="any_aspectn_pattern" />
-     *     <Item pattern="method_pattern_without_symbols" stateless="type_pattern" inspect="any_aspectn_pattern" not-inspect="any_aspectn_pattern" />
+     *     <Item pattern="method_name_pattern" stateless="type_pattern" inspect="any_aspectn_pattern" not-inspect="any_aspectn_pattern" />
+     *     <Item pattern="method_name_pattern" stateless="type_pattern" inspect="any_aspectn_pattern" not-inspect="any_aspectn_pattern" />
      *   </Items>
      * </Pooling>
      */
@@ -50,7 +50,7 @@ namespace Pooling.Fody
             /// <remarks>
             /// 由于固定为`method()`格式，所以省略`method()`符号本身，直接编写表达式主体。该表达式与<see cref="Stateless"/>二选一，<see cref="Pattern"/>具有更高优先级
             /// </remarks>
-            public IMatcher? Pattern { get; } = string.IsNullOrEmpty(pattern) ? null : new MethodMatcher(pattern!).Cached();
+            public IMatcher? Pattern { get; } = string.IsNullOrEmpty(pattern) ? null : new MethodMatcher($"* {pattern}()").Cached();
 
             /// <summary>
             /// 无状态池化对象表达式。池化对象本身无状态，在回收时不需要重置

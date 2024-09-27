@@ -32,9 +32,9 @@ namespace Pooling.Fody.Tests
                 <NotInspect>execution(* SingleFeatureCases.Cases.Excepted.Excepted3.*(..))</NotInspect>
               </NotInspects>
               <Items>
-                <Item pattern="* SingleFeatureCases.PoolItems.Patterns.CustomBoolTryReset.BoolReset()" stateless="" inspect="" not-inspect="" />
-                <Item pattern="* SingleFeatureCases.PoolItems.Patterns.CustomObjectTryReset.ObjectReset()" stateless="" inspect="execution(* SingleFeatureCases.Cases.ConfiguredPattern..*.*(..))" not-inspect="execution(* *..NotInspectNonBoolReset.*(..))" />
-                <Item pattern="* SingleFeatureCases.PoolItems.Patterns.CustomVoidTryReset.VoidReset()" stateless="" inspect="execution(* AllInspect.*(..)) || execution(* SingleFeatureCases.Cases.ConfiguredPattern.I.*.*(..))" not-inspect="execution(* *..NotInspectNonBoolReset.*(..))" />
+                <Item pattern="SingleFeatureCases.PoolItems.Patterns.CustomBoolTryReset.BoolReset" stateless="" inspect="" not-inspect="" />
+                <Item pattern="SingleFeatureCases.PoolItems.Patterns.CustomObjectTryReset.ObjectReset" stateless="" inspect="execution(* SingleFeatureCases.Cases.ConfiguredPattern..*.*(..))" not-inspect="execution(* *..NotInspectNonBoolReset.*(..))" />
+                <Item pattern="SingleFeatureCases.PoolItems.Patterns.CustomVoidTryReset.VoidReset" stateless="" inspect="execution(* AllInspect.*(..)) || execution(* SingleFeatureCases.Cases.ConfiguredPattern.I.*.*(..))" not-inspect="execution(* *..NotInspectNonBoolReset.*(..))" />
                 <Item pattern="" stateless="SingleFeatureCases.PoolItems.Patterns.MicrosoftPoolItem" inspect="execution(* AllInspect.*(..))" not-inspect="" />
                 <Item pattern="" stateless="SingleFeatureCases.PoolItems.Patterns.StatelessPoolItem" inspect="" not-inspect="execution(* NotInspectStateless.*(..))" />
               </Items>
