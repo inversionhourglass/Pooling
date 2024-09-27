@@ -59,5 +59,10 @@ namespace Pooling.Fody.Tests
 
             return (T)method.CreateDelegate(typeof(T), instance);
         }
+
+        public Type? GetType(string fullName)
+        {
+            return Assembly.GetType(fullName);
+        }
     }
 }

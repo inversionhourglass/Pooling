@@ -1,18 +1,14 @@
 ﻿using Pooling;
-using System;
 
 namespace SingleFeatureCases.PoolItems
 {
-    public abstract class PoolItem : IPoolItem, IPoolingState
+    public abstract class PoolItem : NotResettablePoolItem, IPoolItem
     {
-        public virtual PoolingState State { get; set; }
+        public override bool ExceptedReset => true;
 
-        public virtual Type[]? ExclusiveTypes { get; }
-
-        public virtual string? ExclusivePattern { get; }
-
-        public bool TryReset()
+        public virtual bool TryReset()
         {
+            Reset = true;
             return true;
         }
     }

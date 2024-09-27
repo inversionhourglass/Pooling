@@ -1,4 +1,6 @@
 ﻿using SingleFeatureCases;
+using SingleFeatureCases.Cases.ConfiguredPattern;
+using SingleFeatureCases.Cases.ConfiguredPattern.I;
 using SingleFeatureCases.Cases.Excepted;
 using SingleFeatureCases.Cases.Interfaces.I;
 using SingleFeatureCases.Cases.Interfaces.II;
@@ -6,10 +8,11 @@ using SingleFeatureCases.Cases.NonPool;
 using SingleFeatureCases.ExceptedCases;
 using SingleFeatureCases.ExceptedCases.I;
 using SingleFeatureCases.IncludedCases;
+using SingleFeatureCases.PoolItems.Patterns;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -28,6 +31,11 @@ namespace Pooling.Fody.Tests
                 <NotInspect>execution(* SingleFeatureCases.Cases.Excepted.Excepted3.*(..))</NotInspect>
               </NotInspects>
               <Items>
+                <Item pattern="* SingleFeatureCases.PoolItems.Patterns.CustomBoolTryReset.BoolReset()" stateless="" inspect="" not-inspect="" />
+                <Item pattern="* SingleFeatureCases.PoolItems.Patterns.CustomObjectTryReset.ObjectReset()" stateless="" inspect="execution(* SingleFeatureCases.Cases.ConfiguredPattern..*.*(..))" not-inspect="execution(* *..NotInspectNonBoolReset.*(..))" />
+                <Item pattern="* SingleFeatureCases.PoolItems.Patterns.CustomVoidTryReset.VoidReset()" stateless="" inspect="execution(* AllInspect.*(..)) || execution(* SingleFeatureCases.Cases.ConfiguredPattern.I.*.*(..))" not-inspect="execution(* *..NotInspectNonBoolReset.*(..))" />
+                <Item pattern="" stateless="SingleFeatureCases.PoolItems.Patterns.MicrosoftPoolItem" inspect="execution(* AllInspect.*(..))" not-inspect="" />
+                <Item pattern="" stateless="SingleFeatureCases.PoolItems.Patterns.StatelessPoolItem" inspect="" not-inspect="execution(* NotInspectStateless.*(..))" />
               </Items>
             </Pooling>
             """;
@@ -38,6 +46,10 @@ namespace Pooling.Fody.Tests
         {
             Assembly = new("SingleFeatureCases.dll", "SingleFeatureCases", CONFIG);
             Pool.Set((IPool)Assembly.GetInstance(typeof(StatefulPool).FullName!, true));
+            var tMicrosoftPoolItem = Assembly.GetType(typeof(MicrosoftPoolItem).FullName!)!;
+            var microsoftPool = Activator.CreateInstance(typeof(DefaultPool<>).MakeGenericType(tMicrosoftPoolItem));
+            var mPoolSet = typeof(Pool<>).MakeGenericType(tMicrosoftPoolItem).GetMethod("Set", BindingFlags.Public | BindingFlags.Static)!;
+            mPoolSet.Invoke(null, [microsoftPool]);
         }
 
         [Fact]
@@ -472,6 +484,37 @@ namespace Pooling.Fody.Tests
 
             sIncludeSpecificMethod.NotInclude();
             AssertPoolingResult(sIncludeSpecificMethod.PoolingResult);
+        }
+
+        [Fact]
+        public void CustomTryResetTest()
+        {
+            var sAllInspect = Assembly.GetStaticInstance(typeof(AllInspect).FullName!, true);
+
+            var resetStates = (dynamic[])sAllInspect.M();
+            AssertPoolingResult(sAllInspect.PoolingResult);
+
+            foreach (var state in resetStates)
+            {
+                state.CheckResetState();
+            }
+        }
+
+        [Fact]
+        public void PatternPoolItemTest()
+        {
+            var sNotInspectNonBoolReset = Assembly.GetStaticInstance(typeof(NotInspectNonBoolReset).FullName!, true);
+            var sNotInspectExceptedMicrosoft = Assembly.GetStaticInstance(typeof(NotInspectExceptedMicrosoft).FullName!, true);
+            var sNotInspectStateless = Assembly.GetStaticInstance(typeof(NotInspectStateless).FullName!, true);
+
+            sNotInspectNonBoolReset.M();
+            AssertPoolingResult(sNotInspectNonBoolReset.PoolingResult);
+
+            sNotInspectExceptedMicrosoft.M();
+            AssertPoolingResult(sNotInspectExceptedMicrosoft.PoolingResult);
+
+            sNotInspectStateless.M();
+            AssertPoolingResult(sNotInspectStateless.PoolingResult);
         }
 
         private void AssertPoolingResult(params dynamic[] items)
