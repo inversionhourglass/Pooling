@@ -486,12 +486,10 @@ namespace Pooling.Fody
 
         private static bool FieldPersistentCheck(MethodDefinition methodDef, List<PoolItem> poolItems, Instruction previous)
         {
-            if (previous.IsLdfld()) return false;
+            if (!previous.IsLdfld()) return false;
 
-            if (previous.TryResolveVariable(methodDef, out var variable))
-            {
-                poolItems.RemoveAll(x => x.Storing != null && x.Storing.TryResolveVariable(methodDef, out var v) && v == variable);
-            }
+            var fieldRef = (FieldReference)previous.Operand;
+            poolItems.RemoveAll(x => x.Storing != null && x.Storing.Operand is FieldReference fr && fieldRef == fr);
 
             return true;
         }
