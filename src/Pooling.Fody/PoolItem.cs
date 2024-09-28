@@ -7,16 +7,11 @@ namespace Pooling.Fody
 {
     internal class PoolItem(Instruction newObj, TypeReference itemTypeRef, MethodDefinition? resetMethodDef = null)
     {
-        /// <summary>
-        /// 池化对象发现阶段，该属性用于保存newobj操作；
-        /// 发现阶段结束后的池化操作阶段，该属性用于保存ldloc操作；
-        /// 在池化对象回收阶段，使用上一阶段的ldloc加载池化对象并交还给对象池
-        /// </summary>
         public Instruction NewObj { get; } = newObj;
 
         public Instruction? Storing { get; set; }
 
-        public Instruction? Loading { get; set; }
+        public Instructions? Loading { get; set; }
 
         public TypeReference ItemTypeRef { get; } = itemTypeRef;
 
@@ -27,7 +22,7 @@ namespace Pooling.Fody
             if (ResetMethodDef == null) return [];
 
             List<Instruction> calling = [
-                Loading!.Clone(),
+                .. Loading!.Clone(),
                 moduleWeaver.Import(ResetMethodDef).WithGenerics(genericArguments).CallAny()
             ];
             if (!ResetMethodDef.ReturnType.IsVoid())

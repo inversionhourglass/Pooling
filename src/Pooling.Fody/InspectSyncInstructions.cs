@@ -18,11 +18,11 @@ namespace Pooling.Fody
 
             if (poolItems.Length == 0) return;
 
-            SyncPooling(poolItems);
+            Pooling(poolItems, false);
 
             var handler = methodDef.GetOrBuildOutermostExceptionHandler(ExceptionHandlerType.Finally);
 
-            SyncPoolingRecycle(methodDef, handler, poolItems);
+            PoolingRecycle(methodDef, handler, poolItems);
 
             methodDef.Body.InitLocals = true;
             methodDef.Body.OptimizePlus();
@@ -44,7 +44,7 @@ namespace Pooling.Fody
                         return [];
                     case Code.Ret:
                         if (!methodDef.ReturnType.IsVoid()) counting.Decrease();
-                        if (counting.Any())
+                        if (counting.StackNotEmpty)
                         {
                             throw new FodyWeavingException($"Failed analysis the instructions, There still has a value on the stack after ret(offset: {instruction.Offset}).");
                         }
@@ -53,7 +53,7 @@ namespace Pooling.Fody
                         throw new FodyWeavingException($"Please share your assembly with me; there is an instruction 'no.' that I have never encountered before, offset: {instruction.Offset}.");
                     case Code.Newobj:
                         counting.Increase();
-                        var detectedPoolItem = InspectSyncInstruction(methodSignature, instruction, typeNonPooledMatcher, methodNonPooledMatcher, items);
+                        var detectedPoolItem = InspectInstruction(methodSignature, instruction, typeNonPooledMatcher, methodNonPooledMatcher, items);
                         if (detectedPoolItem != null)
                         {
                             counting.Add(detectedPoolItem);
@@ -72,12 +72,20 @@ namespace Pooling.Fody
                             poolItems.Add(allocatingPoolItem);
                         }
                         break;
+                    case Code.Stfld:
+                        VariablePersistentCheck(methodDef, poolItems, instruction.Previous);
+                        counting.Decrease(2);
+                        break;
+                    case Code.Stsfld:
+                        VariablePersistentCheck(methodDef, poolItems, instruction.Previous);
+                        counting.Decrease();
+                        break;
                     case Code.Call:
                     case Code.Callvirt:
                         var mr = (MethodReference)instruction.Operand;
                         var md = mr.ToDefinition();
 
-                        if (md.IsSetter) StatelessCheck(methodDef, poolItems, instruction.Previous);
+                        if (md.IsSetter) VariablePersistentCheck(methodDef, poolItems, instruction.Previous);
 
                         var staticAmount = md.IsStatic ? 0 : 1;
                         var amount = mr.Parameters.Count + staticAmount;
@@ -163,10 +171,6 @@ namespace Pooling.Fody
                     case Code.Stind_Ref:
                         counting.Decrease(2);
                         break;
-                    case Code.Stfld:
-                        StatelessCheck(methodDef, poolItems, instruction.Previous);
-                        counting.Decrease(2);
-                        break;
                     case Code.Add:
                     case Code.Sub:
                     case Code.Mul:
@@ -209,15 +213,14 @@ namespace Pooling.Fody
                     case Code.Initobj:
                     case Code.Pop:
                     case Code.Throw:
-                        counting.Decrease();
-                        break;
-                    case Code.Stsfld:
-                        StatelessCheck(methodDef, poolItems, instruction.Previous);
+                    case Code.Switch:
+                    case Code.Brfalse_S:
+                    case Code.Brtrue_S:
+                    case Code.Brfalse:
+                    case Code.Brtrue:
                         counting.Decrease();
                         break;
                     case Code.Br_S:
-                    case Code.Brfalse_S:
-                    case Code.Brtrue_S:
                     case Code.Beq_S:
                     case Code.Bge_S:
                     case Code.Bgt_S:
@@ -229,8 +232,6 @@ namespace Pooling.Fody
                     case Code.Ble_Un_S:
                     case Code.Blt_Un_S:
                     case Code.Br:
-                    case Code.Brfalse:
-                    case Code.Brtrue:
                     case Code.Beq:
                     case Code.Bge:
                     case Code.Bgt:
@@ -242,12 +243,11 @@ namespace Pooling.Fody
                     case Code.Ble_Un:
                     case Code.Blt_Un:
                         break;
-                    case Code.Switch:
                     case Code.Leave:
                     case Code.Leave_S:
                     case Code.Endfinally:
                     case Code.Endfilter:
-                        if (counting.Any())
+                        if (counting.StackNotEmpty)
                         {
                             throw new FodyWeavingException($"Failed analysis the instructions, There still has a value on the stack after {code}(offset: {instruction.Offset}).");
                         }
@@ -330,17 +330,9 @@ namespace Pooling.Fody
             }
 
             return poolItems.ToArray();
-
-            static void StatelessCheck(MethodDefinition methodDef, List<PoolItem> poolItems, Instruction previous)
-            {
-                if (!previous.IsLdloc()) return;
-
-                var variable = previous.ResolveVariable(methodDef);
-                poolItems.RemoveAll(x => x.Storing != null && x.Storing.ResolveVariable(methodDef) == variable);
-            }
         }
 
-        private PoolItem? InspectSyncInstruction(MethodSignature methodSignature, Instruction newObj, ITypeMatcher[] typeNonPooledMatcher, ITypeMatcher[] methodNonPooledMatcher, Config.Item[] poolItems)
+        private PoolItem? InspectInstruction(MethodSignature methodSignature, Instruction newObj, ITypeMatcher[] typeNonPooledMatcher, ITypeMatcher[] methodNonPooledMatcher, Config.Item[] poolItems)
         {
             if (newObj.Operand is not MethodReference ctor || ctor.Parameters.Count != 0) return null;
 
@@ -398,7 +390,7 @@ namespace Pooling.Fody
             return stateless == null ? null : new(newObj, typeRef);
         }
 
-        private void SyncPooling(PoolItem[] poolItems)
+        private void Pooling(PoolItem[] poolItems, bool maybeField)
         {
             foreach (var poolItem in poolItems)
             {
@@ -408,11 +400,18 @@ namespace Pooling.Fody
 
                 if (poolItem.Storing == null) throw new FodyWeavingException("Failed to analyze the instructions; the instruction for storing the variable was not found.");
 
-                poolItem.Loading = poolItem.Storing.Stloc2Ldloc();
+                if (maybeField && poolItem.Storing.IsStfld())
+                {
+                    poolItem.Loading = new([Instruction.Create(OpCodes.Ldarg_0), poolItem.Storing.Stfld2Ldfld()]);
+                }
+                else
+                {
+                    poolItem.Loading = new(poolItem.Storing.Stloc2Ldloc());
+                }
             }
         }
 
-        private void SyncPoolingRecycle(MethodDefinition methodDef, ExceptionHandler handler, PoolItem[] poolItems)
+        private void PoolingRecycle(MethodDefinition methodDef, ExceptionHandler handler, PoolItem[] poolItems)
         {
             var instructions = methodDef.Body.Instructions;
             var endFinallyOrLeave = handler.HandlerEnd.Previous;
@@ -425,13 +424,13 @@ namespace Pooling.Fody
                 var genericArguments = poolItem.ItemTypeRef is GenericInstanceType git ? git.GenericArguments.ToArray() : [];
                 var blockStart = nextPoolItemRecycleStart == null ?
                                     poolItem.Loading!.Clone() :
-                                    nextPoolItemRecycleStart.Set(poolItem.Loading!.OpCode, poolItem.Loading.Operand);
+                                    nextPoolItemRecycleStart.SetFirstToCloned(poolItem.Loading!);
                 nextPoolItemRecycleStart = Instruction.Create(OpCodes.Nop);
                 instructions.InsertBefore(endFinallyOrLeave, [
-                    blockStart,
+                    .. blockStart,
                     Instruction.Create(OpCodes.Brfalse, nextPoolItemRecycleStart),
                     .. poolItem.CallResetMethod(this, genericArguments),
-                    poolItem.Loading,
+                    .. poolItem.Loading,
                     Instruction.Create(OpCodes.Call, mrReturn)
                 ]);
             }
@@ -440,6 +439,18 @@ namespace Pooling.Fody
             {
                 instructions.InsertBefore(endFinallyOrLeave, nextPoolItemRecycleStart);
             }
+        }
+
+        private static bool VariablePersistentCheck(MethodDefinition methodDef, List<PoolItem> poolItems, Instruction previous)
+        {
+            if (!previous.IsLdloc()) return false;
+
+            if (previous.TryResolveVariable(methodDef, out var variable))
+            {
+                poolItems.RemoveAll(x => x.Storing != null && x.Storing.TryResolveVariable(methodDef, out var v) && v == variable);
+            }
+
+            return true;
         }
     }
 }

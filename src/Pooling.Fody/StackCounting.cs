@@ -8,6 +8,8 @@ namespace Pooling.Fody
         private readonly List<Item> _items = [];
         private int _stackDepth;
 
+        public bool StackNotEmpty => _stackDepth != 0;
+
         public bool Any() => _items.Count > 0;
 
         public void Add(PoolItem poolItem)

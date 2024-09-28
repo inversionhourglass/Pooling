@@ -55,9 +55,9 @@ namespace Pooling.Fody
                 items.Add(item);
             }
 
-            if (methodDef.TryResolveStateMachine(out var stateMachineTypeDef))
+            if (methodDef.TryResolveStateMachine(out var stateMachineTypeDef, out var stateMachineAttribute))
             {
-                InspectAsyncInstructions(stateMachineTypeDef!, typeNonPooledMatcher, methodNonPooledMatcher, items.ToArray());
+                InspectStateMachineInstructions(signature, stateMachineTypeDef!, stateMachineAttribute, typeNonPooledMatcher, methodNonPooledMatcher, items.ToArray());
             }
             else
             {
