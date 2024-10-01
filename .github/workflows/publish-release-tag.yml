@@ -1,0 +1,51 @@
+name: Publish Release NuGets on tag
+on:
+  push:
+    tags:
+      - '*'
+env:
+  SOLUTION: Pooling.sln
+jobs:
+  publish:
+    name: Build and Publish
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3.0.3
+        with:
+          dotnet-version: |
+            3.1.x
+            5.0.x
+            6.0.x
+            7.0.x
+            8.0.x
+
+      - name: Restore NuGets
+        run: dotnet restore ${{ env.SOLUTION }}
+
+      - name: Build Solution
+        run: dotnet build --configuration Release --no-restore ${{ env.SOLUTION }}
+
+      - name: Run Tests
+        run: dotnet test --configuration Release --no-build ${{ env.SOLUTION }}
+
+      - name: Delete exists packages
+        run: rm -r -fo nugets
+
+      - name: Pack NuGets
+        run: dotnet pack ${{ env.SOLUTION }} --no-build --configuration Release
+
+      - name: Publish
+        run: dotnet nuget push nugets/**.nupkg -k ${{ secrets.API_KEY }} -s https://api.nuget.org/v3/index.json
+
+      - name: Create github release
+        uses: ncipollo/release-action@v1
+        with:
+          bodyFile: CHANGELOG.md

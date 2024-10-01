@@ -1,0 +1,45 @@
+name: Publish Prerelease NuGets
+on:
+  push:
+    branches:
+      - prerelease
+env:
+  TIMESTAMP: $(date +'%s')
+  SOLUTION: Pooling.sln
+jobs:
+  publish:
+    name: Build and Publish
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3.0.3
+        with:
+          dotnet-version: |
+            3.1.x
+            5.0.x
+            6.0.x
+            7.0.x
+            8.0.x
+
+      - name: Remove Tests
+        run: dotnet sln ${{ env.SOLUTION }} remove (ls -r test/**/*.csproj)
+
+      - name: Restore NuGets
+        run: dotnet restore ${{ env.SOLUTION }}
+        
+      - name: Build Solution
+        run: dotnet build --configuration Release --no-restore ${{ env.SOLUTION }} --version-suffix preview-${{ env.TIMESTAMP }}
+
+      - name: Delete exists packages
+        run: rm -r -fo nugets
+
+      - name: Pack Solution
+        run: dotnet pack ${{ env.SOLUTION }} --configuration Release --no-build --version-suffix preview-${{ env.TIMESTAMP }}
+
+      - name: Publish
+        run: dotnet nuget push nugets/**.nupkg -k ${{ secrets.API_KEY }} -s https://api.nuget.org/v3/index.json
