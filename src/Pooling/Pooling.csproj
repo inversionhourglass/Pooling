@@ -12,7 +12,7 @@
     <PackageOutputPath>$(SolutionDir)nugets</PackageOutputPath>
     <PackageProjectUrl>https://github.com/inversionhourglass/Pooling</PackageProjectUrl>
     <RepositoryUrl>https://github.com/inversionhourglass/Pooling.git</RepositoryUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/inversionhourglass/Pooling/master/pooling.png</PackageIconUrl>
+    <PackageIcon>pooling.png</PackageIcon>
     <RepositoryType>git</RepositoryType>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -23,11 +23,13 @@
   <ItemGroup>
     <None Include="..\..\README_en.md" Pack="true" PackagePath="\" />
     <None Include="..\..\CHANGELOG.md" Pack="true" PackagePath="\" />
+	<None Include="..\..\pooling.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 	
   <ItemGroup>
     <PackageReference Include="Fody" Version="6.8.1" PrivateAssets="None" />
     <PackageReference Include="FodyPackaging" Version="6.8.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All"/>
   </ItemGroup>
 
 </Project>
