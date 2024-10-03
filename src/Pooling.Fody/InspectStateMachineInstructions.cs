@@ -220,6 +220,26 @@ namespace Pooling.Fody
                     case Code.Initblk:
                         counting.Decrease(3);
                         break;
+                    case Code.Beq_S:
+                    case Code.Bge_S:
+                    case Code.Bgt_S:
+                    case Code.Ble_S:
+                    case Code.Blt_S:
+                    case Code.Bne_Un_S:
+                    case Code.Bge_Un_S:
+                    case Code.Bgt_Un_S:
+                    case Code.Ble_Un_S:
+                    case Code.Blt_Un_S:
+                    case Code.Beq:
+                    case Code.Bge:
+                    case Code.Bgt:
+                    case Code.Ble:
+                    case Code.Blt:
+                    case Code.Bne_Un:
+                    case Code.Bge_Un:
+                    case Code.Bgt_Un:
+                    case Code.Ble_Un:
+                    case Code.Blt_Un:
                     case Code.Cpobj:
                     case Code.Stobj:
                     case Code.Stind_I:
@@ -283,27 +303,7 @@ namespace Pooling.Fody
                         counting.Decrease();
                         break;
                     case Code.Br_S:
-                    case Code.Beq_S:
-                    case Code.Bge_S:
-                    case Code.Bgt_S:
-                    case Code.Ble_S:
-                    case Code.Blt_S:
-                    case Code.Bne_Un_S:
-                    case Code.Bge_Un_S:
-                    case Code.Bgt_Un_S:
-                    case Code.Ble_Un_S:
-                    case Code.Blt_Un_S:
                     case Code.Br:
-                    case Code.Beq:
-                    case Code.Bge:
-                    case Code.Bgt:
-                    case Code.Ble:
-                    case Code.Blt:
-                    case Code.Bne_Un:
-                    case Code.Bge_Un:
-                    case Code.Bgt_Un:
-                    case Code.Ble_Un:
-                    case Code.Blt_Un:
                         break;
                     case Code.Leave:
                     case Code.Leave_S:
