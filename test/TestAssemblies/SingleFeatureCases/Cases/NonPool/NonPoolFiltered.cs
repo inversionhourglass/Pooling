@@ -1,11 +1,11 @@
 ﻿using Pooling;
 using SingleFeatureCases.PoolItems.Interfaces;
 
-[assembly:NonPooled(Types = [typeof(AssemblyNonPoolTypeFiltered)], Pattern = "SingleFeatureCases.PoolItems.*.Assembly*PatternFiltered")]
+[assembly:NonPooled(PooledTypes = [typeof(AssemblyNonPoolTypeFiltered)], PooledPattern = "SingleFeatureCases.PoolItems.*.Assembly*PatternFiltered")]
 
 namespace SingleFeatureCases.Cases.NonPool
 {
-    [NonPooled(Types = [typeof(ClassNonPoolTypeFiltered)], Pattern = "*..Interfaces.ClassNonPoolPatternFiltered")]
+    [NonPooled(PooledTypes = [typeof(ClassNonPoolTypeFiltered)], PooledPattern = "*..Interfaces.ClassNonPoolPatternFiltered")]
     public class NonPoolFiltered : Stateful<NonPoolFiltered>
     {
         public static void AssemblyFiltered()
@@ -42,7 +42,7 @@ namespace SingleFeatureCases.Cases.NonPool
             PoolingResult = pooling;
         }
 
-        [NonPooled(Types = [typeof(MethodNonPoolTypeFiltered)])]
+        [NonPooled(PooledTypes = [typeof(MethodNonPoolTypeFiltered)])]
         public static void MethodTypeFiltered()
         {
             var pooling = PoolingResult.New();
@@ -60,7 +60,7 @@ namespace SingleFeatureCases.Cases.NonPool
             PoolingResult = pooling;
         }
 
-        [NonPooled(Pattern = "MethodNonPoolPatternFiltered")]
+        [NonPooled(PooledPattern = "MethodNonPoolPatternFiltered")]
         public static void MethodPatternFiltered()
         {
             var pooling = PoolingResult.New();

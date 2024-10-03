@@ -79,7 +79,7 @@ namespace Pooling.Fody
 
                     foreach (var property in attribute.Properties)
                     {
-                        if (property.Name == Constants.PROP_Types)
+                        if (property.Name == Constants.PROP_PooledTypes)
                         {
                             if (property.Argument.Value is CustomAttributeArgument[] args)
                             {
@@ -87,7 +87,7 @@ namespace Pooling.Fody
                                 matchers.Add(typeRefs);
                             }
                         }
-                        else if (property.Name == Constants.PROP_Pattern)
+                        else if (property.Name == Constants.PROP_PooledPattern)
                         {
                             if (property.Argument.Value is not string pattern) throw new ArgumentException($"Cannot parse the Types property value of NonPooledAttribute to a string instance, the actual type is {property.Argument.Value.GetType()}");
 
