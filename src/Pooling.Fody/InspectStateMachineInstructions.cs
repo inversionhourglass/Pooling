@@ -27,36 +27,26 @@ namespace Pooling.Fody
 
             Pooling(poolItems, true);
 
+            ExceptionHandler handler;
             if (stateMachineCatching == null)
             {
-                var handler = mdMoveNext.GetOrBuildOutermostExceptionHandler(ExceptionHandlerType.Finally);
-                PoolingRecycle(mdMoveNext, handler, poolItems);
+                // IteratorStateMachine的MoveNext没有try..catch..，将其作为同步方法处理
+                handler = mdMoveNext.GetOrBuildOutermostExceptionHandler(ExceptionHandlerType.Finally);
             }
             else if (TryResolveStateFieldAndVariable(tdStateMachine, mdMoveNext, stateMachineCatching, out var fdState, out var vState) &&
                 OfficalStateUsage(mdMoveNext, stateMachineCatching, fdState, vState!) == false)
             {
-                // 非官方格式就用比较强硬的方式处理
-                throw new NotImplementedException("eeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+                // StateMachine非官方格式，比如由Rougamo生成的经过IL优化的StateMachine
+                handler = StateMachineUnofficalBuildTryFinally(mdMoveNext, vState!);
             }
             else
             {
-                var handler = StateMachineBuildTryFinally(mdMoveNext, stateMachineCatching, vState);
-                PoolingRecycle(mdMoveNext, handler, poolItems);
+                handler = StateMachineBuildTryFinally(mdMoveNext, stateMachineCatching, vState);
             }
+            PoolingRecycle(mdMoveNext, handler, poolItems);
 
             mdMoveNext.Body.InitLocals = true;
             mdMoveNext.Body.OptimizePlus();
-
-            // 1. 找到state变量
-            // 2. 查找是否存在标准的state赋值-1的代码
-            // 2.0. 不存在state变量
-            //   -> 使用了async语法，但方法实际没有任何await操作，变量都不存在，一般是release模式
-            // 2.1. 不存在操作state变量的代码
-            //   -> 使用了async语法，但方法实际没有任何await操作，按2.2的方式处理
-            // 2.2. 存在操作state变量的代码且存在标准的state赋值-1的代码
-            //   -> C#编译器生成的标准代码，直接try..finally..判断state是否为-1，-1表示需要将对象返回池
-            // 2.3. 存在操作state变量的代码但不存在标准的state赋值-1的代码
-            //   -> 某种自定义生成的StateMachine（比如Rougamo），直接在外层try..catch..中处理，不再讲究StateMachine代码格式，主打一个能用就行
         }
 
         private PoolItem[] StateMachineAnalysisPoolItems(MethodSignature methodSignature, TypeDefinition tdStateMachine, MethodDefinition mdMoveNext, ExceptionHandler? stateMachineCatching, ITypeMatcher[] typeNonPooledMatcher, ITypeMatcher[] methodNonPooledMatcher, Config.Item[] items)
@@ -496,6 +486,34 @@ namespace Pooling.Fody
                 HandlerEnd = finallyEnd
             };
             mdMoveNext.Body.ExceptionHandlers.Insert(0, handler);
+
+            return handler;
+        }
+
+        private ExceptionHandler StateMachineUnofficalBuildTryFinally(MethodDefinition mdMoveNext, VariableDefinition vState)
+        {
+            var instructions = mdMoveNext.Body.Instructions;
+            var tryStart = instructions.First();
+            var tryEnd = Instruction.Create(OpCodes.Nop);
+            var finallyEnd = Instruction.Create(OpCodes.Nop);
+            var endFinally = Instruction.Create(OpCodes.Endfinally);
+
+            instructions.Add([
+                tryEnd.Set(OpCodes.Ldloc, vState),
+                Instruction.Create(OpCodes.Ldc_I4_0),
+                Instruction.Create(OpCodes.Bge, endFinally),
+                endFinally,
+                finallyEnd
+            ]);
+
+            var handler = new ExceptionHandler(ExceptionHandlerType.Finally)
+            {
+                TryStart = tryStart,
+                TryEnd = tryEnd,
+                HandlerStart = tryEnd,
+                HandlerEnd = finallyEnd
+            };
+            mdMoveNext.Body.ExceptionHandlers.Add(handler);
 
             return handler;
         }
