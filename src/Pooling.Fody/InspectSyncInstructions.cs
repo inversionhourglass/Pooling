@@ -33,10 +33,29 @@ namespace Pooling.Fody
             var counting = new StackCounting();
             var poolItems = new List<PoolItem>();
             var methodDef = methodSignature.Definition;
+            var filterCatches = new List<Instruction>();
             var instruction = methodDef.GetFirstInstruction();
+
+            foreach (var handler in methodDef.Body.ExceptionHandlers)
+            {
+                if (handler.HandlerType == ExceptionHandlerType.Catch)
+                {
+                    filterCatches.Add(handler.HandlerStart);
+                }
+                else if (handler.HandlerType == ExceptionHandlerType.Filter)
+                {
+                    filterCatches.Add(handler.FilterStart);
+                    filterCatches.Add(handler.HandlerStart);
+                }
+            }
 
             while (instruction != null)
             {
+                if (filterCatches.Contains(instruction))
+                {
+                    counting.Increase();
+                }
+
                 var code = instruction.OpCode.Code;
                 switch (code)
                 {
@@ -218,6 +237,7 @@ namespace Pooling.Fody
                     case Code.Brtrue_S:
                     case Code.Brfalse:
                     case Code.Brtrue:
+                    case Code.Endfilter:
                         counting.Decrease();
                         break;
                     case Code.Br_S:
@@ -246,7 +266,6 @@ namespace Pooling.Fody
                     case Code.Leave:
                     case Code.Leave_S:
                     case Code.Endfinally:
-                    case Code.Endfilter:
                         if (counting.StackNotEmpty)
                         {
                             throw new FodyWeavingException($"Failed analysis the instructions, There still has a value on the stack after {code}(offset: {instruction.Offset}).");
