@@ -71,6 +71,10 @@ namespace Pooling.Fody
                     case Code.No:
                         throw new FodyWeavingException($"Please share your assembly with me; there is an instruction 'no.' that I have never encountered before, offset: {instruction.Offset}.");
                     case Code.Newobj:
+                        if (instruction.Operand is MethodReference ctorRef && ctorRef.HasParameters)
+                        {
+                            counting.Decrease(ctorRef.Parameters.Count);
+                        }
                         counting.Increase();
                         var detectedPoolItem = InspectInstruction(methodSignature, instruction, typeNonPooledMatcher, methodNonPooledMatcher, items);
                         if (detectedPoolItem != null)
