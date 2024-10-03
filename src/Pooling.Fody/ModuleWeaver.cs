@@ -9,9 +9,6 @@ namespace Pooling.Fody
 {
     public partial class ModuleWeaver : SimulationModuleWeaver
     {
-        private readonly Dictionary<TypeDefinition, Dictionary<string, ResetFunc?>> _cache = [];
-        private ResetFuncManager _resetFuncManager;
-
         private TypeReference _trPool;
 
         private MethodReference _mrGet;
@@ -36,8 +33,6 @@ namespace Pooling.Fody
         protected override void ExecuteInternal()
         {
             if (TryResolveAssemblyNonPooledMatcher()) return;
-
-            _resetFuncManager = new(this, _tBooleanRef);
 
             foreach (var typeDef in ModuleDefinition.Types.ToArray())
             {
