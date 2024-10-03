@@ -22,6 +22,7 @@ namespace Pooling.Fody
         private Config _config;
 
 #pragma warning disable CS8618, CS8601
+        public ModuleWeaver() : this(false) { }
 
         public ModuleWeaver(bool testRun) : base(testRun) { }
 #pragma warning restore CS8618, CS8601
@@ -139,7 +140,7 @@ namespace Pooling.Fody
             }
             if (xItems != null)
             {
-                foreach(var xItem in xItems.Elements())
+                foreach (var xItem in xItems.Elements())
                 {
                     if (xItem.Name != "Item") continue;
 
@@ -181,14 +182,7 @@ namespace Pooling.Fody
                 yield return item;
             }
 
-            if (_testRun)
-            {
-                yield return "Pooling";
-            }
-            //else
-            //{
-            //    yield return "Pooling.Fody";
-            //}
+            yield return "Pooling";
         }
     }
 }
