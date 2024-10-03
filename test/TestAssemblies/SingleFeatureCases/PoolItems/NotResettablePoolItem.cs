@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace SingleFeatureCases.PoolItems
+﻿namespace SingleFeatureCases.PoolItems
 {
     public abstract class NotResettablePoolItem : IPoolingState, IResetState
     {
@@ -9,10 +7,6 @@ namespace SingleFeatureCases.PoolItems
         public virtual bool ExceptedReset => false;
 
         public virtual PoolingState State { get; set; }
-
-        public virtual Type[]? ExclusiveTypes { get; }
-
-        public virtual string? ExclusivePattern { get; }
 
         public virtual void CheckResetState()
         {

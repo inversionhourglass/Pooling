@@ -3,6 +3,7 @@ using Cecil.AspectN.Matchers;
 using Fody;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -26,8 +27,11 @@ namespace Pooling.Fody
             var key = $"{typeRef.Scope} {typeRef}";
             if (!_Cache.TryGetValue(key, out var exclusive))
             {
-                var types = ResolveTypes(typeRef);
-                var pattern = ResolvePattern(typeRef);
+                var typeDef = typeRef.ToDefinition();
+                var attrPoolingExclusive = typeDef.CustomAttributes.FirstOrDefault(x => x.Is(Constants.TYPE_PoolingExclusiveAttribute));
+
+                var types = attrPoolingExclusive == null ? [] : ResolveTypes(attrPoolingExclusive);
+                var pattern = attrPoolingExclusive == null ? null : ResolvePattern(attrPoolingExclusive);
                 exclusive = new(types, pattern);
                 _Cache[key] = exclusive;
             }
@@ -35,37 +39,18 @@ namespace Pooling.Fody
             return exclusive;
         }
 
-        private static TypeReference[] ResolveTypes(TypeReference typeRef)
+        private static TypeReference[] ResolveTypes(CustomAttribute attrPoolingExclusive)
         {
-            var mdGetExclusiveTypes = typeRef.GetMethod(true, md => md.IsGetter && md.Name == Constants.Getter(Constants.PROP_ExclusiveTypes));
-            if (mdGetExclusiveTypes == null) return [];
+            var pTypes = attrPoolingExclusive.Properties.FirstOrDefault(x => x.Name == Constants.PROP_Types);
+            if (pTypes.Name == null || pTypes.Argument.Value is not CustomAttributeArgument[] types) return [];
 
-            var exclusiveTypes = new List<TypeReference>();
-            foreach (var instruction in mdGetExclusiveTypes.Body.Instructions)
-            {
-                if (instruction.OpCode.Code == Code.Ldtoken && instruction.Operand is TypeReference tr)
-                {
-                    exclusiveTypes.Add(tr);
-                }
-            }
-
-            return exclusiveTypes.ToArray();
+            return types.Select(x => x.Value is TypeReference typeRef ? typeRef : throw new ArgumentException($"Cannot parse the Types property value of PoolingExclusiveAttribute to a TypeReference instance, the actual type is {x.Value.GetType()}")).ToArray();
         }
 
-        private static string? ResolvePattern(TypeReference typeRef)
+        private static string? ResolvePattern(CustomAttribute attrPoolingExclusive)
         {
-            var mdGetExclusivePattern = typeRef.GetMethod(true, md => md.IsGetter && md.Name == Constants.Getter(Constants.PROP_ExclusivePattern));
-            if (mdGetExclusivePattern == null) return null;
-
-            foreach (var instruction in mdGetExclusivePattern.Body.Instructions)
-            {
-                if (instruction.OpCode.Code == Code.Ldstr && instruction.Operand is string pattern)
-                {
-                    return pattern;
-                }
-            }
-
-            return null;
+            var pPattern = attrPoolingExclusive.Properties.FirstOrDefault(x => x.Name == Constants.PROP_Pattern);
+            return pPattern.Name == null || pPattern.Argument.Value is not string pattern ? null : pattern;
         }
     }
 }
