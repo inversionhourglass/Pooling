@@ -401,7 +401,7 @@ namespace Pooling.Fody
 
             while (instruction != null && instruction != stateMachineCatching.TryEnd)
             {
-                if (instruction.OpCode.Code == Code.Ldfld && instruction.Operand is FieldReference fr && fr.ToDefinition()  == fdState)
+                if (instruction.OpCode.Code == Code.Ldfld && instruction.Operand is FieldReference fr && fr.ToDefinition() == fdState)
                 {
                     var next = instruction.Next;
                     if (next.IsStloc() && next.TryResolveVariable(mdMoveNext, out vState))
@@ -493,18 +493,24 @@ namespace Pooling.Fody
         private ExceptionHandler StateMachineUnofficalBuildTryFinally(MethodDefinition mdMoveNext, VariableDefinition vState)
         {
             var instructions = mdMoveNext.Body.Instructions;
+            var returnBlock = mdMoveNext.MergeReturnToLeave();
             var tryStart = instructions.First();
             var tryEnd = Instruction.Create(OpCodes.Nop);
-            var finallyEnd = Instruction.Create(OpCodes.Nop);
+            var finallyEnd = returnBlock[0];
             var endFinally = Instruction.Create(OpCodes.Endfinally);
+            var lastInstruction = instructions.Last();
+            if (lastInstruction.OpCode.Code != Code.Leave && lastInstruction.OpCode.Code != Code.Leave_S || lastInstruction.Operand is not Instruction instruction || instruction != finallyEnd)
+            {
+                instructions.Add(Instruction.Create(OpCodes.Leave, finallyEnd));
+            }
 
             instructions.Add([
                 tryEnd.Set(OpCodes.Ldloc, vState),
                 Instruction.Create(OpCodes.Ldc_I4_0),
                 Instruction.Create(OpCodes.Bge, endFinally),
-                endFinally,
-                finallyEnd
+                endFinally
             ]);
+            instructions.Add(returnBlock);
 
             var handler = new ExceptionHandler(ExceptionHandlerType.Finally)
             {
