@@ -3,7 +3,6 @@ using Cecil.AspectN.Matchers;
 using Fody;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -487,6 +486,9 @@ namespace Pooling.Fody
             };
             mdMoveNext.Body.ExceptionHandlers.Insert(0, handler);
 
+            mdMoveNext.UpdateDebugInfoLastSequencePoint();
+            mdMoveNext.SkipExceptionHandlerBlockSequencePoint(handler);
+
             return handler;
         }
 
@@ -520,6 +522,9 @@ namespace Pooling.Fody
                 HandlerEnd = finallyEnd
             };
             mdMoveNext.Body.ExceptionHandlers.Add(handler);
+
+            mdMoveNext.UpdateDebugInfoLastSequencePoint();
+            mdMoveNext.SkipExceptionHandlerBlockSequencePoint(handler);
 
             return handler;
         }
