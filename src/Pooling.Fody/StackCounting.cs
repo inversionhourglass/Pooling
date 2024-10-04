@@ -14,7 +14,7 @@ namespace Pooling.Fody
 
         public void Add(PoolItem poolItem)
         {
-            _items.Add(new(poolItem, _stackDepth));
+            _items.Add(new(poolItem, 1));
         }
 
         public void Increase(int count = 1)
@@ -35,13 +35,9 @@ namespace Pooling.Fody
             foreach (var item in _items)
             {
                 item.StackDepth -= count;
-                if (item.StackDepth == 0)
+                if (item.StackDepth <= 0)
                 {
                     targets.Add(item);
-                }
-                else if (item.StackDepth < 0)
-                {
-                    throw new FodyWeavingException("Failed analysis the instructions, get negative value of stack depth.");
                 }
             }
 
