@@ -452,7 +452,7 @@ namespace Pooling.Fody
                 instructions.InsertBefore(endFinallyOrLeave, [
                     .. blockStart,
                     Instruction.Create(OpCodes.Brfalse, nextPoolItemRecycleStart),
-                    .. poolItem.CallResetMethod(this, genericArguments),
+                    .. poolItem.CallResetMethod(this, genericArguments, nextPoolItemRecycleStart),
                     .. poolItem.Loading,
                     Instruction.Create(OpCodes.Call, mrReturn)
                 ]);

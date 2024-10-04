@@ -17,7 +17,7 @@ namespace Pooling.Fody
 
         public MethodDefinition? ResetMethodDef { get; } = resetMethodDef;
 
-        public Instruction[] CallResetMethod(BaseModuleWeaver moduleWeaver, TypeReference[] genericArguments)
+        public Instruction[] CallResetMethod(BaseModuleWeaver moduleWeaver, TypeReference[] genericArguments, Instruction ifResetFailedTo)
         {
             if (ResetMethodDef == null) return [];
 
@@ -25,7 +25,11 @@ namespace Pooling.Fody
                 .. Loading!.Clone(),
                 moduleWeaver.Import(ResetMethodDef).WithGenerics(genericArguments).CallAny()
             ];
-            if (!ResetMethodDef.ReturnType.IsVoid())
+            if (ResetMethodDef.ReturnType.IsBool())
+            {
+                calling.Add(Instruction.Create(OpCodes.Brfalse, ifResetFailedTo));
+            }
+            else if (!ResetMethodDef.ReturnType.IsVoid())
             {
                 calling.Add(Instruction.Create(OpCodes.Pop));
             }
