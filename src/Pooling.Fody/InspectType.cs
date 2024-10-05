@@ -10,7 +10,7 @@ namespace Pooling.Fody
         private void InspectType(TypeDefinition typeDef)
         {
             if (typeDef.IsEnum || typeDef.IsInterface || typeDef.IsArray || typeDef.IsDelegate() || !typeDef.HasMethods) return;
-            if (typeDef.IsCompilerGenerated()) return;
+            if (typeDef.IsCompilerGenerated() && (typeDef.IsStateMachine() || typeDef.IsIEnumerator())) return;
 
             var typeNonPooledMatcher = TryResolveNonPooledMatcher(typeDef.CustomAttributes);
             if (typeNonPooledMatcher == null) return;
