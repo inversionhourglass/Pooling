@@ -24,7 +24,17 @@ namespace Pooling
         public DefaultPool()
         {
             _resetFunc = new(ResolveReset);
-            var maximumRetained = Pool<T>.MaximumRetained != 0 ? Pool<T>.MaximumRetained : (Pool.GenericMaximumRetained != 0 ? Pool.GenericMaximumRetained : Environment.ProcessorCount * 2);
+            var formatName = typeof(T).FullName.Replace('.', '_');
+            var envMaximumRetained = Environment.GetEnvironmentVariable($"NET_POOLING_MAX_RETAIN_{formatName}");
+            envMaximumRetained ??= Environment.GetEnvironmentVariable("NET_POOLING_MAX_RETAIN");
+
+            if (envMaximumRetained == null || !int.TryParse(envMaximumRetained, out var maximumRetained))
+            {
+                maximumRetained = Pool<T>.MaximumRetained != 0 ? Pool<T>.MaximumRetained : (Pool.GenericMaximumRetained != 0 ? Pool.GenericMaximumRetained : Environment.ProcessorCount * 2);
+            }
+
+            Console.WriteLine($"Pooling max retain for {typeof(T)}: {maximumRetained}");
+
             _maxCapacity = maximumRetained - 1;
         }
 
