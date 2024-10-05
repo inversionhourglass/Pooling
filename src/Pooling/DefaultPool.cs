@@ -33,8 +33,6 @@ namespace Pooling
                 maximumRetained = Pool<T>.MaximumRetained != 0 ? Pool<T>.MaximumRetained : (Pool.GenericMaximumRetained != 0 ? Pool.GenericMaximumRetained : Environment.ProcessorCount * 2);
             }
 
-            Console.WriteLine($"Pooling max retain for {typeof(T)}: {maximumRetained}");
-
             _maxCapacity = maximumRetained - 1;
         }
 
