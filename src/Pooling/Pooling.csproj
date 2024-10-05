@@ -16,7 +16,7 @@
     <RepositoryType>git</RepositoryType>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(SolutionDir)CHANGELOG.md"))</PackageReleaseNotes>
+    <PackageReleaseNotes Condition="'$(VersionSuffix)' == ''">For details: https://github.com/inversionhourglass/Pooling/releases/tag/v$(VersionPrefix)</PackageReleaseNotes>
     <PackageReadmeFile>README_en.md</PackageReadmeFile>
   </PropertyGroup>
 	
