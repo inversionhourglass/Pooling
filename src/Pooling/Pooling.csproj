@@ -22,7 +22,6 @@
 	
   <ItemGroup>
     <None Include="..\..\README_en.md" Pack="true" PackagePath="\" />
-    <None Include="..\..\CHANGELOG.md" Pack="true" PackagePath="\" />
 	<None Include="..\..\pooling.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 	
