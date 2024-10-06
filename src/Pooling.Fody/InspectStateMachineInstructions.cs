@@ -30,7 +30,7 @@ namespace Pooling.Fody
             if (stateMachineCatching == null)
             {
                 // IteratorStateMachine的MoveNext没有try..catch..，将其作为同步方法处理
-                handler = mdMoveNext.GetOrBuildOutermostExceptionHandler(ExceptionHandlerType.Finally);
+                handler = mdMoveNext.BuildOutermostExceptionHandler(ExceptionHandlerType.Finally);
             }
             else if (TryResolveStateFieldAndVariable(tdStateMachine, mdMoveNext, stateMachineCatching, out var fdState, out var vState) &&
                 OfficalStateUsage(mdMoveNext, stateMachineCatching, fdState, vState!) == false)

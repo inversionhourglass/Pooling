@@ -20,7 +20,7 @@ namespace Pooling.Fody
 
             Pooling(poolItems, false);
 
-            var handler = methodDef.GetOrBuildOutermostExceptionHandler(ExceptionHandlerType.Finally);
+            var handler = methodDef.BuildOutermostExceptionHandler(ExceptionHandlerType.Finally);
 
             PoolingRecycle(methodDef, handler, poolItems);
 

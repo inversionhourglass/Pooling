@@ -6,7 +6,6 @@ using SingleFeatureCases.Cases.Interfaces.I;
 using SingleFeatureCases.Cases.Interfaces.II;
 using SingleFeatureCases.Cases.NonPool;
 using SingleFeatureCases.Cases.Occupies;
-using SingleFeatureCases.Cases.Optimizes;
 using SingleFeatureCases.ExceptedCases;
 using SingleFeatureCases.ExceptedCases.I;
 using SingleFeatureCases.IncludedCases;
@@ -518,18 +517,6 @@ namespace Pooling.Fody.Tests
 
             sNotInspectStateless.M();
             AssertPoolingResult(sNotInspectStateless.PoolingResult);
-        }
-
-        /// <summary>
-        /// 实际上try..finally..重用通过该测试并测试不出来，需要反编译查看，但该测试可以保证try..finally..重用不会出现异常
-        /// </summary>
-        [Fact]
-        public void TryFinallyReuseOptimizeTest()
-        {
-            var sReuseTryFinally = Assembly.GetStaticInstance(typeof(ReuseTryFinally).FullName!, true);
-
-            sReuseTryFinally.M();
-            AssertPoolingResult(sReuseTryFinally.PoolingResult);
         }
 
         [Fact]
