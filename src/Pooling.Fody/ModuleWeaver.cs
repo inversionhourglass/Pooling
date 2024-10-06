@@ -1,4 +1,5 @@
-﻿using Cecil.AspectN.Matchers;
+﻿using Cecil.AspectN;
+using Cecil.AspectN.Matchers;
 using Fody;
 using Mono.Cecil;
 using System;
@@ -91,7 +92,7 @@ namespace Pooling.Fody
                         {
                             if (property.Argument.Value is not string pattern) throw new ArgumentException($"Cannot parse the Types property value of NonPooledAttribute to a string instance, the actual type is {property.Argument.Value.GetType()}");
 
-                            matchers.Add(new TypeMatcher(pattern));
+                            matchers.Add(TyppePatternParser.Parse(pattern));
                         }
                     }
                     if (matchers.Count == beforeCount) return null;

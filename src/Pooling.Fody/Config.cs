@@ -58,7 +58,7 @@ namespace Pooling.Fody
             /// <remarks>
             /// 表达式格式为类型匹配格式，直接编写表达式主体。该表达式与<see cref="Pattern"/>二选一，<see cref="Pattern"/>具有更高优先级
             /// </remarks>
-            public ITypeMatcher? Stateless { get; } = string.IsNullOrEmpty(stateless) ? null : new TypeMatcher(stateless!).Cached();
+            public ITypeMatcher? Stateless { get; } = string.IsNullOrEmpty(stateless) ? null : TyppePatternParser.Parse(stateless!).Cached();
 
             /// <summary>
             /// 池化应用目标表达式。匹配哪些方法/属性/构造方法里需要进行对当前池化对象进行检查，发现匹配<see cref="Pattern"/>或<see cref="Stateless"/>的初始化操作时，进行池化操作替换
