@@ -1,0 +1,9 @@
+﻿<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
+  <Pooling>
+    <Items>
+      <Item stateless="System.Collections.Concurrent.ConcurrentDictionary&lt;System.Type, object&gt;" inspect="method(* ConsoleApp.Cases.SingletonPoolCase.*(..))" />
+	  <Item stateless="System.Net.Http.HttpClient" inspect="execution(* ConsoleApp.Cases.SemaphorePoolCase.*(..))" />
+	  <Item stateless="System.Random" inspect="method(* ConsoleApp.Cases.ThreadLocalPoolCase.*(..)) || execution(* ConsoleApp.Cases.ThreadLocalPoolCase/*.*(..))" />
+	</Items>
+  </Pooling>
+</Weavers>

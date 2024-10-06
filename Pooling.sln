@@ -33,6 +33,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pooling.Fody.Tests", "test\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SingleFeatureCases", "test\TestAssemblies\SingleFeatureCases\SingleFeatureCases.csproj", "{BFC8EF35-2AD6-49F2-8CF6-3F7540B5BB3B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{8C9ED2D8-9A5D-4252-A425-C69160D3C611}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp", "samples\ConsoleApp\ConsoleApp.csproj", "{2051FCE9-307F-43EC-8499-7384D6A7180C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +59,10 @@ Global
 		{BFC8EF35-2AD6-49F2-8CF6-3F7540B5BB3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BFC8EF35-2AD6-49F2-8CF6-3F7540B5BB3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BFC8EF35-2AD6-49F2-8CF6-3F7540B5BB3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2051FCE9-307F-43EC-8499-7384D6A7180C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2051FCE9-307F-43EC-8499-7384D6A7180C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2051FCE9-307F-43EC-8499-7384D6A7180C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2051FCE9-307F-43EC-8499-7384D6A7180C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -67,6 +75,7 @@ Global
 		{09B89A69-282B-46D3-90B4-3C3ED232C4BA} = {C759790D-2979-4513-A04C-22A35B9DB2E7}
 		{24396F8C-E4C9-4803-82E0-0109D5ACCD58} = {C759790D-2979-4513-A04C-22A35B9DB2E7}
 		{BFC8EF35-2AD6-49F2-8CF6-3F7540B5BB3B} = {09B89A69-282B-46D3-90B4-3C3ED232C4BA}
+		{2051FCE9-307F-43EC-8499-7384D6A7180C} = {8C9ED2D8-9A5D-4252-A425-C69160D3C611}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E93ED568-E4B6-4EC8-B692-700EE6AE5592}
