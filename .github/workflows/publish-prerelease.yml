@@ -29,6 +29,9 @@ jobs:
       - name: Remove Tests
         run: dotnet sln ${{ env.SOLUTION }} remove (ls -r test/**/*.csproj)
 
+      - name: Remove Samples
+        run: dotnet sln ${{ env.SOLUTION }} remove (ls -r samples/**/*.csproj)
+
       - name: Restore NuGets
         run: dotnet restore ${{ env.SOLUTION }}
         
