@@ -1,0 +1,70 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:all>
+    <xs:element name="Inspects" minOccurs="0" maxOccurs="1">
+      <xs:complexType>
+        <xs:sequence>
+          <xs:element name="Inspect" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+              <xs:documentation>Node value is an AspectN expression. Global filter for methods, only methods matching this expression will be inspected for pooled types.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:element>
+    <xs:element name="NotInspects" minOccurs="0" maxOccurs="1">
+      <xs:complexType>
+        <xs:sequence>
+          <xs:element name="NotInspect" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+              <xs:documentation>Node value is an AspectN expression. Global filter for methods, any methods matching this expression will not use pooling.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:element>
+    <xs:element name="Items" minOccurs="0" maxOccurs="1">
+      <xs:complexType>
+        <xs:sequence>
+          <xs:element name="Item" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+              <xs:documentation>Pooling item</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+              <xs:attribute name="pattern" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>AspectN type+method expression. Matches types for pooling and methods for reset operations.</xs:documentation>
+                </xs:annotation>
+              </xs:attribute>
+              <xs:attribute name="stateless" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>AspectN type expression. Matches types for pooling as stateless objects that do not require reset before being returned to the pool.</xs:documentation>
+                </xs:annotation>
+              </xs:attribute>
+              <xs:attribute name="inspect" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>AspectN expression. Specifies the methods in which pooled types can be used.</xs:documentation>
+                </xs:annotation>
+              </xs:attribute>
+              <xs:attribute name="not-inspect" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>AspectN expression. Specifies methods where pooling will not occur.</xs:documentation>
+                </xs:annotation>
+              </xs:attribute>
+            </xs:complexType>
+          </xs:element>
+        </xs:sequence>
+      </xs:complexType>
+    </xs:element>
+  </xs:all>
+  <xs:attribute name="enabled" type="xs:boolean">
+    <xs:annotation>
+      <xs:documentation>Set to false to disable Pooling. The default is true.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+  <xs:attribute name="composite-accessibility" type="xs:boolean">
+    <xs:annotation>
+      <xs:documentation>Set to true to use the type and method composite accessibility. The default is false. Etc, an internal type has a public method, public for default(false) and internal for true.</xs:documentation>
+    </xs:annotation>
+  </xs:attribute>
+</xs:complexType>
