@@ -29,6 +29,9 @@ jobs:
             6.0.x
             7.0.x
             8.0.x
+
+      - name: Remove Samples
+        run: dotnet sln ${{ env.SOLUTION }} remove (ls -r samples/**/*.csproj)
           
       - name: Restore NuGets
         run: dotnet restore ${{ env.SOLUTION }}
@@ -65,7 +68,7 @@ jobs:
             8.0.x
 
       - name: Remove Samples
-        run: dotnet sln ${{ env.SOLUTION }} remove (ls -r samples/**/*.csproj)
+        run: dotnet sln ${{ env.SOLUTION }} remove $(find samples -name "*.csproj")
           
       - name: Restore NuGets
         run: dotnet restore ${{ env.SOLUTION }}
