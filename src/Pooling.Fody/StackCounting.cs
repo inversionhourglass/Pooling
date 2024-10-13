@@ -6,9 +6,6 @@ namespace Pooling.Fody
     internal class StackCounting
     {
         private readonly List<Item> _items = [];
-        private int _stackDepth;
-
-        public bool StackNotEmpty => _stackDepth != 0;
 
         public bool Any() => _items.Count > 0;
 
@@ -19,7 +16,6 @@ namespace Pooling.Fody
 
         public void Increase(int count = 1)
         {
-            _stackDepth += count;
             foreach (var item in _items)
             {
                 item.StackDepth += count;
@@ -28,9 +24,6 @@ namespace Pooling.Fody
 
         public PoolItem? Decrease(int count = 1)
         {
-            _stackDepth -= count;
-            if (_stackDepth < 0) throw new FodyWeavingException("Failed analysis the instructions, get negative value of global stack depth.");
-
             var targets = new List<Item>();
             foreach (var item in _items)
             {

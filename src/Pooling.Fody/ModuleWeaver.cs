@@ -15,9 +15,9 @@ namespace Pooling.Fody
         private MethodReference _mrGet;
         private MethodReference _mrReturn;
 
-        private ITypeMatcher[]? _assemblyNonPooledMatcher;
+        internal ITypeMatcher[]? _assemblyNonPooledMatcher;
 
-        private Config _config;
+        internal Config _config;
 
 #pragma warning disable CS8618, CS8601
         public ModuleWeaver() : this(false) { }
