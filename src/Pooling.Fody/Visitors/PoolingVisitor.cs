@@ -14,10 +14,20 @@ namespace Pooling.Fody.Visitors
     {
         protected readonly StackCounting _counting = new();
         protected readonly TContext _context = context;
+        protected readonly List<PoolItem> _poolItems = [];
+        protected readonly HashSet<Instruction> _persistents = [];
 
         protected abstract MethodDefinition InspectingMethodDef { get; }
 
-        public List<PoolItem> PoolItems { get; } = [];
+        public PoolItem[] GetPoolItems()
+        {
+            foreach (var persistent in _persistents)
+            {
+                PersistentCheck(persistent);
+            }
+
+            return _poolItems.Distinct().ToArray();
+        }
 
         protected override bool VisitNewobj(Instruction instruction)
         {
@@ -98,7 +108,7 @@ namespace Pooling.Fody.Visitors
             if (allocatingPoolItem != null)
             {
                 allocatingPoolItem.Storing = instruction;
-                PoolItems.Add(allocatingPoolItem);
+                _poolItems.Add(allocatingPoolItem);
             }
         }
         #endregion Stloc
@@ -126,7 +136,7 @@ namespace Pooling.Fody.Visitors
             var mr = (MethodReference)instruction.Operand;
             var md = mr.ToDefinition();
 
-            if (md.IsSetter) PersistentCheck(instruction);
+            if (md.IsSetter) _persistents.Add(instruction);
 
             var staticAmount = md.IsStatic ? 0 : 1;
             var amount = mr.Parameters.Count + staticAmount;
@@ -141,7 +151,7 @@ namespace Pooling.Fody.Visitors
         {
             var returned = base.VisitStsfld(instruction);
 
-            PersistentCheck(instruction);
+            _persistents.Add(instruction);
             _counting.Decrease();
 
             return returned;
@@ -229,7 +239,7 @@ namespace Pooling.Fody.Visitors
 
             if (previous.TryResolveVariable(InspectingMethodDef, out var variable))
             {
-                PoolItems.RemoveAll(x => x.Storing != null && x.Storing.TryResolveVariable(InspectingMethodDef, out var v) && v == variable);
+                _poolItems.RemoveAll(x => x.Storing != null && x.Storing.TryResolveVariable(InspectingMethodDef, out var v) && v == variable);
             }
 
             return true;

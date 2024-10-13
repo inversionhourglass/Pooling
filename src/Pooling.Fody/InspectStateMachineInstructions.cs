@@ -25,7 +25,7 @@ namespace Pooling.Fody
             var visitor = new StateMachineVisitor(this, context);
             visitor.Visit();
 
-            var poolItems = visitor.PoolItems.Distinct().ToArray();
+            var poolItems = visitor.GetPoolItems();
 
             if (poolItems.Length == 0) return;
 

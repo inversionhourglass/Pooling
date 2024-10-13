@@ -19,11 +19,11 @@ namespace Pooling.Fody.Visitors
                 if (fr.DeclaringType.ToDefinition() == _context.TdStateMachine)
                 {
                     fieldAllocatingPoolItem.Storing = instruction;
-                    PoolItems.Add(fieldAllocatingPoolItem);
+                    _poolItems.Add(fieldAllocatingPoolItem);
                     return returned;
                 }
             }
-            PersistentCheck(instruction);
+            _persistents.Add(instruction);
 
             return returned;
         }
@@ -42,7 +42,7 @@ namespace Pooling.Fody.Visitors
             if (!previous.IsLdfld()) return false;
 
             var fieldRef = (FieldReference)previous.Operand;
-            PoolItems.RemoveAll(x => x.Storing != null && x.Storing.Operand is FieldReference fr && fieldRef == fr);
+            _poolItems.RemoveAll(x => x.Storing != null && x.Storing.Operand is FieldReference fr && fieldRef == fr);
 
             return true;
         }
