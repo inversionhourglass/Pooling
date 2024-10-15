@@ -4,6 +4,6 @@ namespace Lib
 {
     public class TestAttribute : MoAttribute
     {
-        private readonly byte[] Occupy = new byte[1024];
+        private readonly byte[] _occupy = new byte[1024];
     }
 }
