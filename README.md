@@ -71,7 +71,7 @@ public class Test
 
 ### PoolingExclusiveAttribute
 
-默认情况下，实现`IPoolItem`的池化类型会在当前程序集的所有方法中进行池化操作，但有时候我们可能希望该池化类型在部分类型中不进行池化操作，比如我们可能会创建一些池化类型的管理类型或者Builder类型，此时在池化类型上应用`PoolingExclusiveAttribute`便可指定该池化类型不在某些类型/方法中进行池化操作。
+默认情况下，实现`IPoolItem`的池化类型会在所有方法中进行池化操作，但有时候我们可能希望该池化类型在部分类型中不进行池化操作，比如我们可能会创建一些池化类型的管理类型或者Builder类型，此时在池化类型上应用`PoolingExclusiveAttribute`便可指定该池化类型不在某些类型/方法中进行池化操作。
 
 ```csharp
 [PoolingExclusive(Types = [typeof(TestItemBuilder)], Pattern = "execution(* TestItemManager.*(..))")]

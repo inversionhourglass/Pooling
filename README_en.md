@@ -71,7 +71,7 @@ As shown in the [Quick Start](#quick-start) section, any type that implements th
 
 ### PoolingExclusiveAttribute
 
-By default, a pooled type that implements `IPoolItem` will be pooled in all methods of the current assembly. However, there may be cases where pooling is not desired in certain types or methods, such as for manager types or builder types for pooled objects. In such cases, the `PoolingExclusiveAttribute` can be applied to specify where pooling should not occur.
+By default, a pooled type that implements `IPoolItem` will be pooled in all methods. However, there may be cases where pooling is not desired in certain types or methods, such as for manager types or builder types for pooled objects. In such cases, the `PoolingExclusiveAttribute` can be applied to specify where pooling should not occur.
 
 ```csharp
 [PoolingExclusive(Types = [typeof(TestItemBuilder)], Pattern = "execution(* TestItemManager.*(..))")]
