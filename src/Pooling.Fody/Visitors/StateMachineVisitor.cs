@@ -20,6 +20,7 @@ namespace Pooling.Fody.Visitors
                 {
                     fieldAllocatingPoolItem.Storing = instruction;
                     _poolItems.Add(fieldAllocatingPoolItem);
+                    _moduleWeaver.WriteDebug($"Found pooling item variable in {_context.MethodSignature.Definition} at offset {instruction.Offset}");
                     return returned;
                 }
             }
@@ -42,7 +43,15 @@ namespace Pooling.Fody.Visitors
             if (!previous.IsLdfld()) return false;
 
             var fieldRef = (FieldReference)previous.Operand;
-            _poolItems.RemoveAll(x => x.Storing != null && x.Storing.Operand is FieldReference fr && fieldRef == fr);
+            _poolItems.RemoveAll(x =>
+            {
+                var matched = x.Storing != null && x.Storing.Operand is FieldReference fr && fieldRef == fr;
+                if (matched)
+                {
+                    _moduleWeaver.WriteDebug($"The pooling item variable allocated at offset {x.Storing!.Offset} is saved to the field or property at offset {instruction.Offset}, so it will not be able to be pooled.");
+                }
+                return matched;
+            });
 
             return true;
         }

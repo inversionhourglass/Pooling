@@ -44,6 +44,8 @@ namespace Pooling.Fody
 
         public class Item(string? pattern, string? stateless, string? inspect, string? notInspect)
         {
+            public string? PatternOrStateless => pattern ?? stateless;
+
             /// <summary>
             /// 池化对象表达式。该表达式格式固定为`method()`格式，其中类型部分匹配池化对象，方法部分匹配重置方法
             /// </summary>

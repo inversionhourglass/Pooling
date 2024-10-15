@@ -13,11 +13,19 @@ namespace Pooling.Fody
             if (typeDef.IsCompilerGenerated() && (typeDef.IsStateMachine() || typeDef.IsIEnumerator())) return;
 
             var typeNonPooledMatcher = TryResolveNonPooledMatcher(typeDef.CustomAttributes);
-            if (typeNonPooledMatcher == null) return;
+            if (typeNonPooledMatcher == null)
+            {
+                WriteInfo($"Skip inspecting the type {typeDef} based on the type-level NonPooledAttribute.");
+                return;
+            }
 
             var typeSignature = SignatureParser.ParseType(typeDef);
             var inspectMatchers = MatchType(_config.Inspects, typeSignature);
-            if (inspectMatchers != null && inspectMatchers.Length == 0) return; // 存在inspect表达式，但是一个都匹配不上，那么当前类型就不在池化检测范围
+            if (inspectMatchers != null && inspectMatchers.Length == 0)
+            {
+                WriteInfo($"Skip inspecting the type {typeDef} based on the Inspects configuration.");
+                return; // 存在inspect表达式，但是一个都匹配不上，那么当前类型就不在池化检测范围
+            }
             
             var notInspectMatchers = MatchType(_config.NotInspects, typeSignature);
 

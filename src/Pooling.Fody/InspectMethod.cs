@@ -5,6 +5,7 @@ using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace Pooling.Fody
 {
@@ -35,7 +36,11 @@ namespace Pooling.Fody
             if (methodDef.HasPInvokeInfo || methodDef.IsPInvokeImpl) return;
 
             var methodNonPooledMatcher = TryResolveNonPooledMatcher(methodDef.CustomAttributes);
-            if (methodNonPooledMatcher == null) return;
+            if (methodNonPooledMatcher == null)
+            {
+                WriteInfo($"Skip inspecting the method {methodDef} based on the method-level NonPooledAttribute.");
+                return;
+            }
 
             var signature = SignatureParser.ParseMethod(methodDef, _config.CompositeAccessibility);
 
@@ -46,9 +51,17 @@ namespace Pooling.Fody
             var items = new List<Config.Item>();
             foreach (var item in _config.Items)
             {
-                if (item.NotInspect != null && item.NotInspect.IsMatch(signature)) continue;
+                if (item.NotInspect != null && item.NotInspect.IsMatch(signature))
+                {
+                    WriteDebug($"PoolItem({item.PatternOrStateless}) skips inspecting the method {signature.Definition} based on its not-inspect configuration ({item.NotInspect}).");
+                    continue;
+                }
 
-                if (item.Inspect != null && !item.Inspect.IsMatch(signature)) continue;
+                if (item.Inspect != null && !item.Inspect.IsMatch(signature))
+                {
+                    WriteDebug($"PoolItem({item.PatternOrStateless}) skips inspecting the method {signature.Definition} based on its inspect configuration ({item.Inspect}).");
+                    continue;
+                }
 
                 items.Add(item);
             }
@@ -68,7 +81,7 @@ namespace Pooling.Fody
             var notInspectMatcher = notInspectMatchers?.FirstOrDefault(x => x.IsMatch(signature));
             if (notInspectMatcher != null)
             {
-                WriteDebug($"{signature.Definition} is excluded by the global NotInspect pattern ({notInspectMatcher}).");
+                WriteDebug($"Skip inspecting the method {signature.Definition} based on the NotInspect configuration({notInspectMatcher}).");
                 return true;
             }
 
@@ -82,7 +95,7 @@ namespace Pooling.Fody
                 var inspectMatcher = inspectMatchers.FirstOrDefault(x => x.IsMatch(signature));
                 if (inspectMatcher == null)
                 {
-                    WriteDebug($"{signature.Definition} is not included in the global Inspect pattern ({inspectMatcher}).");
+                    WriteDebug($"Skip inspecting the method {signature.Definition} based on the Inspects configuration.");
                     return false;
                 }
             }

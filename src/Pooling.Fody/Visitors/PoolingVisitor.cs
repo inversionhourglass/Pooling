@@ -12,6 +12,7 @@ namespace Pooling.Fody.Visitors
 {
     internal abstract class PoolingVisitor<TContext>(ModuleWeaver moduleWeaver, MethodDefinition methodDef, TContext context) : MethodBodyVisitor(methodDef.Body) where TContext : AnalysisContext
     {
+        protected readonly ModuleWeaver _moduleWeaver = moduleWeaver;
         protected readonly StackCounting _counting = new();
         protected readonly TContext _context = context;
         protected readonly List<PoolItem> _poolItems = [];
@@ -109,6 +110,7 @@ namespace Pooling.Fody.Visitors
             {
                 allocatingPoolItem.Storing = instruction;
                 _poolItems.Add(allocatingPoolItem);
+                _moduleWeaver.WriteDebug($"Found pooling item variable in {_context.MethodSignature.Definition} at offset {instruction.Offset}");
             }
         }
         #endregion Stloc
@@ -181,17 +183,17 @@ namespace Pooling.Fody.Visitors
 
             if (_context.AssemblyNonPooledMatcher != null && _context.AssemblyNonPooledMatcher.Any(x => x.IsMatch(typeSignature)))
             {
-                moduleWeaver.WriteDebug($"[{methodDef}] The type {typeSignature.Reference} is marked as NonPooledAttribute in the assembly level, so the new operation will not be replaced by the pool operation.");
+                _moduleWeaver.WriteDebug($"[{methodDef}] The type {typeSignature.Reference} is marked as NonPooledAttribute in the assembly level, so the new operation will not be replaced by the pool operation.");
                 return null;
             }
             if (_context.TypeNonPooledMatcher.Any(x => x.IsMatch(typeSignature)))
             {
-                moduleWeaver.WriteDebug($"[{methodDef}] The type {typeSignature.Reference} is marked as NonPooledAttribute in the type level, so the new operation will not be replaced by the pool operation.");
+                _moduleWeaver.WriteDebug($"[{methodDef}] The type {typeSignature.Reference} is marked as NonPooledAttribute in the type level, so the new operation will not be replaced by the pool operation.");
                 return null;
             }
             if (_context.MethodNonPooledMatcher.Any(x => x.IsMatch(typeSignature)))
             {
-                moduleWeaver.WriteDebug($"[{methodDef}] The type {typeSignature.Reference} is marked as NonPooledAttribute in the method level, so the new operation will not be replaced by the pool operation.");
+                _moduleWeaver.WriteDebug($"[{methodDef}] The type {typeSignature.Reference} is marked as NonPooledAttribute in the method level, so the new operation will not be replaced by the pool operation.");
                 return null;
             }
 
@@ -208,7 +210,7 @@ namespace Pooling.Fody.Visitors
                 {
                     if (!item.Pattern.SupportDeclaringTypeMatch || item.Pattern.DeclaringTypeMatcher.IsMatch(typeSignature))
                     {
-                        var resetMethodDef = typeSignature.FindMethod(item.Pattern, moduleWeaver._config.CompositeAccessibility);
+                        var resetMethodDef = typeSignature.FindMethod(item.Pattern, _moduleWeaver._config.CompositeAccessibility);
                         if (resetMethodDef != null)
                         {
                             if (!resetMethodDef.IsAbstract && !resetMethodDef.IsStatic &&
@@ -239,7 +241,15 @@ namespace Pooling.Fody.Visitors
 
             if (previous.TryResolveVariable(InspectingMethodDef, out var variable))
             {
-                _poolItems.RemoveAll(x => x.Storing != null && x.Storing.TryResolveVariable(InspectingMethodDef, out var v) && v == variable);
+                _poolItems.RemoveAll(x =>
+                {
+                    var matched = x.Storing != null && x.Storing.TryResolveVariable(InspectingMethodDef, out var v) && v == variable;
+                    if (matched)
+                    {
+                        _moduleWeaver.WriteDebug($"The pooling item variable allocated at offset {x.Storing!.Offset} is saved to the field or property at offset {instruction.Offset}, so it will not be able to be pooled.");
+                    }
+                    return matched;
+                });
             }
 
             return true;

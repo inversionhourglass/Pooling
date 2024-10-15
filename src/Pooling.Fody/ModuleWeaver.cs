@@ -33,7 +33,11 @@ namespace Pooling.Fody
 
         protected override void ExecuteInternal()
         {
-            if (TryResolveAssemblyNonPooledMatcher()) return;
+            if (TryResolveAssemblyNonPooledMatcher())
+            {
+                WriteInfo("Skip inspecting the current assembly based on the assembly-level or module-level NonPooledAttribute.");
+                return;
+            }
 
             foreach (var typeDef in ModuleDefinition.Types.ToArray())
             {
