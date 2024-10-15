@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lib", "Lib\Lib.csproj", "{315E0E86-2A4E-4950-B744-888F70BCAE45}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RougamoPoolingConsoleApp", "RougamoPoolingConsoleApp\RougamoPoolingConsoleApp.csproj", "{88643A34-091B-4EFA-8941-AE8D50B7F284}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{315E0E86-2A4E-4950-B744-888F70BCAE45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{315E0E86-2A4E-4950-B744-888F70BCAE45}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{315E0E86-2A4E-4950-B744-888F70BCAE45}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{315E0E86-2A4E-4950-B744-888F70BCAE45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88643A34-091B-4EFA-8941-AE8D50B7F284}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88643A34-091B-4EFA-8941-AE8D50B7F284}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88643A34-091B-4EFA-8941-AE8D50B7F284}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88643A34-091B-4EFA-8941-AE8D50B7F284}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {52EB3868-0C4A-40BB-B137-7B490FD97067}
+	EndGlobalSection
+EndGlobal
