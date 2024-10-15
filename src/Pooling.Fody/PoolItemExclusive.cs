@@ -22,6 +22,11 @@ namespace Pooling.Fody
             return Types.Any(x => x.StrictEqual(method.Definition.DeclaringType)) || (Patterns != null && Patterns.IsMatch(method));
         }
 
+        public static void CacheClear()
+        {
+            _Cache.Clear();
+        }
+
         public static PoolItemExclusive Resolve(TypeReference typeRef)
         {
             var key = $"{typeRef.Scope} {typeRef}";

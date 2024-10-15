@@ -31,6 +31,14 @@ namespace Pooling.Fody
             return _config.Enabled;
         }
 
+        protected override void CacheClear()
+        {
+            CachedMatcher.Clear();
+            CachedTypeMatcher.Clear();
+            PoolItemExclusive.CacheClear();
+            SignatureExtensions.CacheClear();
+        }
+
         protected override void ExecuteInternal()
         {
             if (TryResolveAssemblyNonPooledMatcher())
