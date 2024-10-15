@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="DependencyInjection.StaticAccessor" Version="8.0.0" />
-    <PackageReference Include="Pooling.Fody" Version="0.1.0-preview-1727771963" />
+    <PackageReference Include="Pooling.Fody" Version="0.1.0" />
   </ItemGroup>
 
 </Project>
