@@ -1,6 +1,6 @@
 # Pooling
 
-[中文](README.md) | English
+[中文](https://github.com/inversionhourglass/Pooling/blob/master/README.md) | English
 
 Pooling is a compile-time object pool component. It simplifies the coding process by replacing the `new` operation with object pool operations at compile-time, removing the need for developers to manually write object pool operation code. It also offers a fully non-intrusive solution that can be used for temporary performance optimizations or for optimizing performance in legacy projects.
 
@@ -298,7 +298,118 @@ As shown, in the `M1` method, there's a difference in how `item1` and `item2` ha
 
 ### Zero-Intrusion Pooling
 
-**TODO:**
+Seeing the title might be a bit confusing—after just discussing non-intrusive practices, why is there now a "zero-intrusive" practice, and what’s the difference?
+
+In the non-intrusive pooling operation introduced earlier, we don't need to change any C# code to implement the specified type pooling. However, we still need to add the Pooling.Fody NuGet dependency and modify the `FodyWeavers.xml` for configuration. This still requires some manual steps from the developer. So, how can we eliminate any manual operation for developers? The answer is simple: move these steps to the CI process or release process. That's right—zero-intrusive refers to the developer's perspective. It doesn’t mean nothing needs to be done, but rather that adding NuGet references and configuring `FodyWeavers.xml` is deferred to the CI/release process.
+
+#### What are the advantages?
+
+Optimization techniques like object pooling are often not just needed by a single project—they are typically general optimizations. In this case, rather than modifying one project at a time, it is faster to configure them uniformly in the CI or release process. Furthermore, when dealing with legacy projects, no one might want to change any code, even if it’s just modifying the project file or the `FodyWeavers.xml` configuration file. In such cases, the CI/release process can be modified to handle these changes. Of course, modifying the unified CI/release process might have a broader impact, but this is just to present a zero-intrusive idea. The actual implementation should be carefully considered based on the situation.
+
+#### How to implement it?
+
+The most straightforward way is to add the Pooling.Fody NuGet dependency to the project during the CI build or release process using `dotnet add package Pooling.Fody`, and then copy the pre-configured `FodyWeavers.xml` to the project directory. However, if the project also references other Fody plugins, directly overwriting the existing `FodyWeavers.xml` might invalidate those plugins. Of course, you could make it more complex by controlling the content of `FodyWeavers.xml` through scripts. Here, I recommend a .NET CLI tool called [Cli4Fody](https://github.com/inversionhourglass/Cli4Fody), which can complete both NuGet dependency additions and `FodyWeavers.xml` configurations in one step.
+
+```xml
+<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
+  <Pooling>
+    <Items>
+      <Item pattern="A.B.C.Item1.GetAndDelete" />
+      <Item pattern="Item2.Clear" inspect="execution(* Test.M1(..))" />
+      <Item stateless="*..Item3" not-inspect="method(* Test.M2())" />
+	</Items>
+  </Pooling>
+</Weavers>
+```
+
+The corresponding command for the FodyWeavers.xml mentioned above using Cli4Fody is:
+
+```shell
+fody-cli MySolution.sln \
+        --addin Pooling -pv 0.1.0 \
+            -n Items:Item -a "pattern=A.B.C.Item1.GetAndDelete" \
+            -n Items:Item -a "pattern=Item2.Clear" -a "inspect=execution(* Test.M1(..))" \
+            -n Items:Item -a "stateless=*..Item3" -a "not-inspect=method(* Test.M2())"
+```
+
+The advantage of Cli4Fody is that it allows NuGet references and FodyWeavers.xml configuration to be completed simultaneously without modifying or deleting configurations of other Fody plugins in the FodyWeavers.xml file. For more information about Cli4Fody configurations, refer to: [https://github.com/inversionhourglass/Cli4Fody](https://github.com/inversionhourglass/Cli4Fody).
+
+#### Rougamo Zero-Intrusion Optimization Example
+
+[Rougamo](https://github.com/inversionhourglass/Rougamo), a static code weaving AOP component, introduced struct support in version 2.2.0, which can optimize GC through structs. However, using structs is not as convenient as classes since they cannot inherit from a base class and can only implement interfaces. As a result, many default implementations in `MoAttribute` need to be repeatedly implemented when defining structs. Now, you can use Pooling to optimize Rougamo's GC through object pooling. In this example, Docker will be used to demonstrate how to achieve zero-intrusion pooling optimization with Cli4Fody during the Docker build process.
+
+Directory structure:
+```
+.
+├── Lib
+│   └── Lib.csproj                       # 依赖Rougamo.Fody
+│   └── TestAttribute.cs                 # 继承MoAttribute
+└── RougamoPoolingConsoleApp
+    └── BenchmarkTest.cs
+    └── Dockerfile
+    └── RougamoPoolingConsoleApp.csproj  # 引用Lib.csproj，没有任何Fody插件依赖
+    └── Program.cs
+```
+
+The test project defines two empty test methods, `M` and `N`, in `BenchmarkTest.cs`, and both methods are decorated with `TestAttribute`. This test will use Cli4Fody in the Docker build step to add the Pooling.Fody dependency to the project and configure `TestAttribute` as a pooled type. Additionally, it will set the pooling restriction to only occur in the `TestAttribute.M` method. Finally, a benchmark will be conducted to compare the GC performance between `M` and `N`.
+
+```csharp
+// TestAttribute
+public class TestAttribute : MoAttribute
+{
+    // To make the GC effects more apparent, each `TestAttribute` will hold a byte array of length 1024.
+    private readonly byte[] _occupy = new byte[1024];
+}
+
+// BenchmarkTest
+public class BenchmarkTest
+{
+    [Benchmark]
+    [Test]
+    public void M() { }
+
+    [Benchmark]
+    [Test]
+    public void N() { }
+}
+
+// Program
+var config = ManualConfig.Create(DefaultConfig.Instance)
+    .AddDiagnoser(MemoryDiagnoser.Default);
+var _ = BenchmarkRunner.Run<BenchmarkTest>(config);
+```
+
+**Dockerfile**
+```docker
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+WORKDIR /src
+COPY . .
+
+ENV PATH="$PATH:/root/.dotnet/tools"
+RUN dotnet tool install -g Cli4Fody
+RUN fody-cli DockerSample.sln --addin Rougamo -pv 4.0.4 --addin Pooling -pv 0.1.0 -n Items:Item -a "stateless=Rougamo.IMo+" -a "inspect=method(* RougamoPoolingConsoleApp.BenchmarkTest.M(..))"
+
+RUN dotnet restore
+
+RUN dotnet publish "./RougamoPoolingConsoleApp/RougamoPoolingConsoleApp.csproj" -c Release -o /src/bin/publish
+
+WORKDIR /src/bin/publish
+ENTRYPOINT ["dotnet", "RougamoPoolingConsoleApp.dll"]
+```
+
+Through Cli4Fody, the `TestAttribute` woven into `BenchmarkTest.M` has undergone pooling operations, while the `TestAttribute` woven into `BenchmarkTest.N` has not. The final Benchmark results are as follows:
+```
+| Method | Mean     | Error   | StdDev   | Gen0   | Gen1   | Allocated |
+|------- |---------:|--------:|---------:|-------:|-------:|----------:|
+| M      | 188.7 ns | 3.81 ns |  6.67 ns | 0.0210 |      - |     264 B |
+| N      | 195.5 ns | 4.09 ns | 11.74 ns | 0.1090 | 0.0002 |    1368 B |
+```
+
+The complete example code is stored at: https://github.com/inversionhourglass/Pooling/tree/master/samples/DockerSample
+
+In this example, the object pooling optimization for Rougamo is achieved through the use of Cli4Fody in the Docker build steps, making the entire process completely seamless and non-intrusive for developers. If you plan to optimize Rougamo using this method, it's important to note that the aspect type `TestAttribute` in the current example is stateless. Therefore, you need to confirm with the developers that all defined aspect types are stateless. For stateful aspect types, you must define a reset method and use the `pattern` attribute instead of the `stateless` attribute when defining the Item node.
+
+There's one more point you might not have noticed: only the Lib project references `Rougamo.Fody`, and the `RougamoPoolingConsoleApp` project does not reference `Rougamo.Fody`. By default, the `TestAttribute` applied to `BenchmarkTest` should not be effective. However, in this example, it does work. This is because when using Cli4Fody, related parameters for Rougamo were also specified, which causes Cli4Fody to add a reference to `Rougamo.Fody` for `RougamoPoolingConsoleApp`. Thus, Cli4Fody can also help avoid missing direct dependencies for Fody plugins across projects. For more information on Cli4Fody, please refer to https://github.com/inversionhourglass/Cli4Fody.
 
 ## Configuration
 
@@ -530,26 +641,6 @@ In this example, Pooling is combined with [DependencyInjection.StaticAccessor](h
 ### Unleashing Your Creativity
 
 The examples provided may not be immediately practical, but their main purpose is to inspire you to think outside the box. By understanding that Pooling replaces temporary `new` operations with object pool operations and the extensibility of custom pools, you may find creative uses for Pooling in future scenarios where it can help you implement solutions quickly with minimal code changes.
-
-## Practical Case
-
-Rougamo, a static AOP weaving component, added support for structs in version 2.2.0, allowing for GC optimization through the use of structs. However, structs are not as convenient as classes due to their inability to inherit from base classes and their requirement to implement interfaces. This often results in the need to duplicate default implementations in many `MoAttribute` when defining structs. Now, you can optimize Rougamo's GC by using Pooling to implement object pooling.
-
-```xml
-<!-- FodyWeavers.xml -->
-<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
-  <Rougamo />
-  <Pooling>
-    <Items>
-      <Item stateless="Rougamo.IMo+" />
-	</Items>
-  </Pooling>
-</Weavers>
-```
-
-That's it! You don't need to modify the code, just configure it to define all aspect types as pooled types. To explain briefly, `stateless` corresponds to the AspectN type expression, and `Rougamo.IMo` is the fully qualified name of the most basic interface of the aspect type. `MoAttribute` also implements this interface. The `+` symbol in the expression indicates matching subclasses. Thus, the AspectN expression means "match all types that implement the `Rougamo.IMo` interface." For more information on AspectN expressions, visit: https://github.com/inversionhourglass/Shared.Cecil.AspectN/blob/master/README.md.
-
-Note that the order of Fody plugins matters. You must define the `Rougamo` node before the `Pooling` node in the configuration. If you define the `Pooling` node first, Rougamo's code won't be woven in when the pooling operations are replaced, and no aspect types will be found.
 
 ## Precautions
 

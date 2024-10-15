@@ -1,6 +1,6 @@
 # Pooling
 
-中文 | [English](README_en.md)
+中文 | [English](https://github.com/inversionhourglass/Pooling/blob/master/README_en.md)
 
 Pooling是一个编译时对象池组件，通过在编译时将`new`操作替换为对象池操作，简化编码过程，无需开发人员手动编写对象池操作代码。同时提供了完全无侵入式的解决方案，可用作临时性能优化的解决方案和老久项目性能优化的解决方案等。
 
@@ -298,7 +298,118 @@ public class Test
 
 ### 零侵入式池化操作
 
-**todo:**
+看到标题是不是有点懵，刚介绍完无侵入式，怎么又来个零侵入式，它们有什么区别？
+
+在上面介绍的无侵入式池化操作中，我们不需要改动任何C#代码即可完成指定类型池化操作，但我们仍需要添加Pooling.Fody的NuGet依赖，并且需要修改FodyWeavers.xml进行配置，这仍然需要开发人员手动操作完成。那如何让开发人员完全不需要任何操作呢？答案也很简单，就是将这一步放到CI流程或发布流程中完成。是的，零侵入是针对开发人员的，并不是真的什么都不需要做，而是将引用NuGet和配置FodyWeavers.xml的步骤延后到CI/发布流程中了。
+
+#### 优势是什么
+
+类似于对象池这类型的优化往往不是仅仅某一个项目需要优化，这种优化可能是普遍性的，那么此时相比一个项目一个项目的修改，统一的在CI流程/发布流程中配置是更为快速的选择。另外在面对一些古董项目时，可能没有人愿意去更改任何代码，即使只是项目文件和FodyWeavers.xml配置文件，此时也可以通过修改CI/发布流程来完成。当然修改统一的CI/发布流程的影响面可能更广，这里只是提供一种零侵入式的思路，具体情况还需要结合实际情况综合考虑。
+
+#### 如何实现
+
+最直接的方式就是在CI构建流程或发布流程中通过`dotnet add package Pooling.Fody`为项目添加NuGet依赖，然后将预先配置好的FodyWeavers.xml复制到项目目录下。但如果项目还引用了其他Fody插件，直接覆盖原有的FodyWeavers.xml可能导致原有的插件无效。当然，你也可以复杂点通过脚本控制FodyWeavers.xml的内容，这里我推荐一个.NET CLI工具，[Cli4Fody](https://github.com/inversionhourglass/Cli4Fody)可以一步完成NuGet依赖和FodyWeavers.xml配置。
+
+```xml
+<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
+  <Pooling>
+    <Items>
+      <Item pattern="A.B.C.Item1.GetAndDelete" />
+      <Item pattern="Item2.Clear" inspect="execution(* Test.M1(..))" />
+      <Item stateless="*..Item3" not-inspect="method(* Test.M2())" />
+	</Items>
+  </Pooling>
+</Weavers>
+```
+
+上面的FodyWeavers.xml，使用Cli4Fody对应的命令为：
+
+```shell
+fody-cli MySolution.sln \
+        --addin Pooling -pv 0.1.0 \
+            -n Items:Item -a "pattern=A.B.C.Item1.GetAndDelete" \
+            -n Items:Item -a "pattern=Item2.Clear" -a "inspect=execution(* Test.M1(..))" \
+            -n Items:Item -a "stateless=*..Item3" -a "not-inspect=method(* Test.M2())"
+```
+
+Cli4Fody的优势是，NuGet引用和FodyWeavers.xml可以同时完成，并且Cli4Fody并不会修改或删除FodyWeavers.xml中其他Fody插件的配置。更多Cli4Fody相关配置，详见：https://github.com/inversionhourglass/Cli4Fody
+
+#### Rougamo零侵入式优化案例
+
+[肉夹馍（Rougamo）](https://github.com/inversionhourglass/Rougamo)，一款静态代码编织的AOP组件。肉夹馍在2.2.0版本中新增了结构体支持，可以通过结构体优化GC。但结构体的使用没有类方便，不可继承父类只能实现接口，所以很多`MoAttribute`中的默认实现在定义结构体时需要重复实现。现在，你可以使用Pooling通过对象池来优化肉夹馍的GC。在这个示例中将使用Docker演示如何在Docker构建流程中使用Cli4Fody完成零侵入式池化操作：
+
+目录结构：
+```
+.
+├── Lib
+│   └── Lib.csproj                       # 依赖Rougamo.Fody
+│   └── TestAttribute.cs                 # 继承MoAttribute
+└── RougamoPoolingConsoleApp
+    └── BenchmarkTest.cs
+    └── Dockerfile
+    └── RougamoPoolingConsoleApp.csproj  # 引用Lib.csproj，没有任何Fody插件依赖
+    └── Program.cs
+```
+
+该测试项目在`BenchmarkTest.cs`里面定义了两个空的测试方法`M`和`N`，两个方法都应用了`TestAttribute`。本次测试将在Docker的构建步骤中使用Cli4Fody为项目增加Pooling.Fody依赖并将`TestAttribute`配置为池化类型，同时设置其只能在`TestAttribute.M`方法中进行池化，然后通过Benchmark对比`M`和`N`的GC情况。
+
+```csharp
+// TestAttribute
+public class TestAttribute : MoAttribute
+{
+    // 为了让GC效果更明显，每个TestAttribute都将持有长度为1024的字节数组
+    private readonly byte[] _occupy = new byte[1024];
+}
+
+// BenchmarkTest
+public class BenchmarkTest
+{
+    [Benchmark]
+    [Test]
+    public void M() { }
+
+    [Benchmark]
+    [Test]
+    public void N() { }
+}
+
+// Program
+var config = ManualConfig.Create(DefaultConfig.Instance)
+    .AddDiagnoser(MemoryDiagnoser.Default);
+var _ = BenchmarkRunner.Run<BenchmarkTest>(config);
+```
+
+**Dockerfile**
+```docker
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+WORKDIR /src
+COPY . .
+
+ENV PATH="$PATH:/root/.dotnet/tools"
+RUN dotnet tool install -g Cli4Fody
+RUN fody-cli DockerSample.sln --addin Rougamo -pv 4.0.4 --addin Pooling -pv 0.1.0 -n Items:Item -a "stateless=Rougamo.IMo+" -a "inspect=method(* RougamoPoolingConsoleApp.BenchmarkTest.M(..))"
+
+RUN dotnet restore
+
+RUN dotnet publish "./RougamoPoolingConsoleApp/RougamoPoolingConsoleApp.csproj" -c Release -o /src/bin/publish
+
+WORKDIR /src/bin/publish
+ENTRYPOINT ["dotnet", "RougamoPoolingConsoleApp.dll"]
+```
+
+通过Cli4Fody最终`BenchmarkTest.M`中织入的`TestAttribute`进行了池化操作，而`BenchmarkTest.N`中织入的`TestAttribute`没有进行池化操作，最终Benchmark结果如下：
+```
+| Method | Mean     | Error   | StdDev   | Gen0   | Gen1   | Allocated |
+|------- |---------:|--------:|---------:|-------:|-------:|----------:|
+| M      | 188.7 ns | 3.81 ns |  6.67 ns | 0.0210 |      - |     264 B |
+| N      | 195.5 ns | 4.09 ns | 11.74 ns | 0.1090 | 0.0002 |    1368 B |
+```
+
+完整示例代码保存在：https://github.com/inversionhourglass/Pooling/tree/master/samples/DockerSample
+
+在这个示例中，通过在Docker的构建步骤中使用Cli4Fody完成了对Rougamo的对象池优化，整个过程对开发时完全无感零侵入的。如果你准备用这种方法对Rougamo进行对象池优化，需要注意的是当前示例中的切面类型`TestAttribute`是无状态的，所以你需要跟开发确认所有定义的切面类型都是无状态的，对于有状态的切面类型，你需要定义重置方法并在定义Item节点时使用pattern属性而不是stateless属性。
+
+在这个示例中还有一点你可能没有注意，只有Lib项目引用了Rougamo.Fody，RougamoPoolingConsoleApp项目并没有引用Rougamo.Fody，默认情况下应用到`BenchmarkTest`的`TestAttribute`应该是不会生效的，但我这个例子中却生效了。这是因为在使用Cli4Fody时还指定了Rougamo的相关参数，Cli4Fody会为RougamoPoolingConsoleApp添加了Rougamo.Fody引用，所以Cli4Fody也可用于避免遗漏项目队Fody插件的直接依赖，更多Cli4Fody的内容详见：https://github.com/inversionhourglass/Cli4Fody
 
 ## 配置项
 
@@ -531,26 +642,6 @@ Pool<Service1>.Set(new ServiceSetupPool());
 ### 发挥想象力
 
 前面的这些例子可能不一定实用，这些例子的主要目的是启发大家开拓思路，理解Pooling的基本实现原理是将临时变量的new操作替换为对象池操作，理解自定义对象池的可扩展性。也许你现在用不上Pooling，但未来的某个需求场景下，你可能可以用Pooling快速实现而不需要大量改动代码。
-
-## 实际应用
-
-[肉夹馍（Rougamo）](https://github.com/inversionhourglass/Rougamo)，一款静态代码编织的AOP组件。肉夹馍在2.2.0版本中新增了结构体支持，可以通过结构体优化GC。但结构体的使用没有类方便，不可继承父类只能实现接口，所以很多`MoAttribute`中的默认实现在定义结构体时需要重复实现。现在，你可以使用Pooling通过对象池来优化肉夹馍的GC。
-
-```xml
-// FodyWeavers.xml
-<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
-  <Rougamo />
-  <Pooling>
-    <Items>
-      <Item stateless="Rougamo.IMo+" />
-	</Items>
-  </Pooling>
-</Weavers>
-```
-
-就这么简单，不需要改代码，仅通过配置就将所有切面类型定义为了池化类型。简单解释一下配置中`stateless`对应的AspectN类型表达式的含义，`Rougamo.IMo`是切面类型最基础的接口的类名全名称，`MoAttribute`也实现了该接口，表达式中的`+`表示匹配子类，该AspectN表达式的含义即为“匹配所有实现了`Rougamo.IMo`接口的类型”，更多AspectN表达式说明，详见：https://github.com/inversionhourglass/Shared.Cecil.AspectN/blob/master/README.md 。
-
-需要注意的是，Fody的插件是有顺序差异的，必须按照上面配置那样先定义`Rougamo`节点，再定义`Pooling`节点。如果先定义`Pooling`节点，那么在进行池化操作替换时，`Rougamo`的代码还没有被织入，是无法找到任何切面类型的。
 
 ## 注意事项
 
