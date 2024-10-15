@@ -200,7 +200,13 @@ namespace Pooling.Fody.Visitors
             if (typeRef.Implement(Constants.TYPE_IPoolItem))
             {
                 var exclusive = PoolItemExclusive.Resolve(typeRef);
-                return exclusive.IsExcluded(_context.MethodSignature) ? null : new(newObj, typeRef);
+                var excluded = exclusive.IsExcluded(_context.MethodSignature);
+                if (excluded)
+                {
+                    _moduleWeaver.WriteInfo($"Detected pooling item {typeRef} that implements IPoolItem in {_context.MethodSignature.Definition} at offset {newObj.Offset}, but it is excluded by PoolingExclusiveAttribute.");
+                    return null;
+                }
+                return new(newObj, typeRef);
             }
 
             ITypeMatcher? stateless = null;
